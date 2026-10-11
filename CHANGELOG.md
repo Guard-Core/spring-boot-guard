@@ -22,3 +22,18 @@
   bypass/exclude/passive semantics, annotation resolution), redis-backed rate limiting against
   a live localhost:6379, properties binding, and servlet protocol unit tests (36 tests).
 - `examples/demo-boot`: runnable Boot app with guarded + open routes.
+
+### Changed (W8b, release engineering; nothing released)
+
+- Maven coordinates move to groupId `com.guard-core` (the Central Portal namespace; guardcore.com
+  proved unverifiable and is not owned by the operator; nothing was ever published under
+  `com.guardcore`). Kotlin/JVM packages stay `com.guardcore.*` (hyphens are illegal in JVM
+  packages).
+- `maven-publish` + `signing` with sources/javadoc jars and the Portal-required POM (MIT license,
+  developers, scm); repositories move to `settings.gradle.kts`; `GUARD_CORE_USE_COMPOSITE` env
+  toggle (default composite ON; `false` = resolve the engine from mavenLocal, then Maven Central,
+  the release-workflow mode).
+- `.github/workflows/release.yml`: engine-artifact pre-flight on Maven Central (engine before
+  adapters), tests at tag, tag-consistency audit (bare vX.Y.z, tag equals the in-file version,
+  SNAPSHOT flip enforced), publish job with per-artifact repo1 existence check and a Central
+  Portal deployment. See docs/release.md.

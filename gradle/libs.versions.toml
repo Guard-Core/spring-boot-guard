@@ -4,7 +4,7 @@ coroutines = "1.11.0"
 springBoot = "3.5.16"
 spotless = "8.10.4"
 detekt = "1.23.8"
-# Engine facade coordinates: substituted with the pinned includeBuild checkout
+# Engine facade coordinates (groupId com.guard-core, the Central Portal namespace): substituted with the pinned includeBuild checkout
 # (see settings.gradle.kts) until the artifact publishes to Maven Central.
 guardCore = "4.3.2"
 
@@ -19,7 +19,7 @@ spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-star
 spring-web = { module = "org.springframework:spring-web" }
 spring-webmvc = { module = "org.springframework:spring-webmvc" }
 jakarta-servlet-api = { module = "jakarta.servlet:jakarta.servlet-api" }
-guard-core = { module = "com.guardcore:guard-core", version.ref = "guardCore" }
+guard-core = { module = "com.guard-core:guard-core", version.ref = "guardCore" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
