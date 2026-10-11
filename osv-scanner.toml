@@ -1,0 +1,120 @@
+# osv-scanner configuration (the dependency-audit CI job and the weekly
+# scheduled scan read this via --config).
+#
+# Suppression discipline (spec 14): entries are per-advisory, each with a
+# reason, and each names its removal trigger. Nothing is disabled wholesale.
+# When the triggering dependency moves, delete the matching entries in the
+# same PR - the audit must fail again the moment a suppression is stale.
+#
+# Shipped-graph note: the adapter's published POM carries exactly
+# com.guard-core:guard-core (compile) and kotlin-reflect (compile) - proven in
+# the engine repo's docs/release-rehearsal.md POM audit. Everything below is
+# either a facade transitive (netty, under the pinned lettuce client) or
+# test-scope packages that consumers resolve at their own Boot-managed
+# versions (spring-webmvc, tomcat, jackson, log4j-api).
+
+# --- netty: facade transitives (io.lettuce:lettuce-core 6.7.1.RELEASE, the
+# pinned Redis client). Guard usage connects Lettuce to a single
+# user-configured Redis endpoint, so the affected netty surfaces (SniHandler
+# traversal, compressed-decode paths, DNS resolver spoofing) are not
+# attacker-reachable in this deployment shape. The pin moves with the next
+# lettuce upgrade at the next synchronized train; remove these entries then.
+
+[[IgnoredVulns]]
+id = "GHSA-c4c3-7fpv-j4q5"
+reason = "netty-handler 4.1.135 transitive via the facade's pinned lettuce-core 6.7.1; single-endpoint Redis usage, SniHandler path not attacker-reachable; removed at the next lettuce upgrade"
+
+[[IgnoredVulns]]
+id = "GHSA-fccg-mwvh-qqg4"
+reason = "netty-handler 4.1.135 transitive via the facade's pinned lettuce-core 6.7.1; single-endpoint Redis usage, handler path not attacker-reachable; removed at the next lettuce upgrade"
+
+[[IgnoredVulns]]
+id = "GHSA-558v-64gr-wgg4"
+reason = "netty-codec 4.1.135 transitive via the facade's pinned lettuce-core 6.7.1; single-endpoint Redis usage, codec path not attacker-reachable; removed at the next lettuce upgrade"
+
+[[IgnoredVulns]]
+id = "GHSA-mfg7-5gfp-c4w3"
+reason = "netty-codec-dns 4.1.135 transitive via the facade's pinned lettuce-core 6.7.1; no DNS-resolver usage (single configured endpoint); removed at the next lettuce upgrade"
+
+# --- spring-webmvc 6.2.19: compileOnly + test-scope here (testImplementation
+# spring-boot-starter-web); NOT shipped by the adapter POM. Consumers resolve
+# spring-webmvc at their own Boot-managed version; the OSV fix train (7.0.9)
+# rides the Boot 4 line.
+
+[[IgnoredVulns]]
+id = "GHSA-j9f9-w8pj-32f8"
+reason = "spring-webmvc 6.2.19 is compileOnly/test-scope in this repo and not shipped by the adapter POM; consumers resolve their own Boot-managed version; fix train is the Boot 4 line per OSV"
+
+[[IgnoredVulns]]
+id = "GHSA-pc63-qcmh-9cmg"
+reason = "spring-webmvc 6.2.19 is compileOnly/test-scope in this repo and not shipped by the adapter POM; consumers resolve their own Boot-managed version; fix train is the Boot 4 line per OSV"
+
+# --- tomcat-embed-core 10.1.55: test-scope only (spring-boot-starter-test);
+# not shipped by the adapter POM; consumers resolve their own container.
+
+[[IgnoredVulns]]
+id = "GHSA-9xv2-5v5q-p794"
+reason = "tomcat-embed-core 10.1.55 is test-scope (spring-boot-starter-test) and not shipped by the adapter POM; consumers resolve their own container version"
+
+[[IgnoredVulns]]
+id = "GHSA-gcx9-497g-6cp6"
+reason = "tomcat-embed-core 10.1.55 is test-scope (spring-boot-starter-test) and not shipped by the adapter POM; consumers resolve their own container version"
+
+[[IgnoredVulns]]
+id = "GHSA-h3x4-894j-xpx5"
+reason = "tomcat-embed-core 10.1.55 is test-scope (spring-boot-starter-test) and not shipped by the adapter POM; consumers resolve their own container version"
+
+# --- jackson 2.21.4 (databind + core): test-scope only
+# (spring-boot-starter-test); not shipped by the adapter POM; consumers
+# resolve their own Boot-managed jackson.
+
+[[IgnoredVulns]]
+id = "GHSA-5gvw-p9qm-jgwh"
+reason = "jackson-databind 2.21.4 is test-scope (spring-boot-starter-test) and not shipped by the adapter POM; consumers resolve their own Boot-managed jackson"
+
+[[IgnoredVulns]]
+id = "GHSA-5jmj-h7xm-6q6v"
+reason = "jackson-databind 2.21.4 is test-scope (spring-boot-starter-test) and not shipped by the adapter POM; consumers resolve their own Boot-managed jackson"
+
+[[IgnoredVulns]]
+id = "GHSA-cxp5-3px4-pw24"
+reason = "jackson-databind 2.21.4 is test-scope (spring-boot-starter-test) and not shipped by the adapter POM; consumers resolve their own Boot-managed jackson"
+
+[[IgnoredVulns]]
+id = "GHSA-gx83-3vf8-gh7j"
+reason = "jackson-databind 2.21.4 is test-scope (spring-boot-starter-test) and not shipped by the adapter POM; consumers resolve their own Boot-managed jackson"
+
+[[IgnoredVulns]]
+id = "GHSA-mhm7-754m-9p8w"
+reason = "jackson-databind 2.21.4 is test-scope (spring-boot-starter-test) and not shipped by the adapter POM; consumers resolve their own Boot-managed jackson"
+
+[[IgnoredVulns]]
+id = "GHSA-q4xh-88c3-wmh7"
+reason = "jackson-databind 2.21.4 is test-scope (spring-boot-starter-test) and not shipped by the adapter POM; consumers resolve their own Boot-managed jackson"
+
+[[IgnoredVulns]]
+id = "GHSA-vvgp-rfg2-7rr6"
+reason = "jackson-databind 2.21.4 is test-scope (spring-boot-starter-test) and not shipped by the adapter POM; consumers resolve their own Boot-managed jackson"
+
+[[IgnoredVulns]]
+id = "GHSA-wjgm-6hv5-3cvf"
+reason = "jackson-databind 2.21.4 is test-scope (spring-boot-starter-test) and not shipped by the adapter POM; consumers resolve their own Boot-managed jackson"
+
+[[IgnoredVulns]]
+id = "GHSA-wv8q-qhhj-9h54"
+reason = "jackson-databind 2.21.4 is test-scope (spring-boot-starter-test) and not shipped by the adapter POM; consumers resolve their own Boot-managed jackson"
+
+[[IgnoredVulns]]
+id = "GHSA-7hhh-6rmp-j9qf"
+reason = "jackson-core 2.21.4 is test-scope (spring-boot-starter-test) and not shipped by the adapter POM; consumers resolve their own Boot-managed jackson"
+
+[[IgnoredVulns]]
+id = "GHSA-p6pp-m3f8-5c89"
+reason = "jackson-core 2.21.4 is test-scope (spring-boot-starter-test) and not shipped by the adapter POM; consumers resolve their own Boot-managed jackson"
+
+# --- log4j-api 2.24.3: test-scope only (spring-boot-starter-logging under
+# the test starter); not shipped by the adapter POM.
+
+[[IgnoredVulns]]
+id = "GHSA-qv9r-c865-cp47"
+reason = "log4j-api 2.24.3 is test-scope (spring-boot-starter-test) and not shipped by the adapter POM; consumers resolve their own logging stack"
