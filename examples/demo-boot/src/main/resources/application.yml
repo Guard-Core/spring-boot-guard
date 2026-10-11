@@ -1,0 +1,21 @@
+guard:
+  enable-redis: true
+  redis-url: redis://localhost:6379
+  redis-prefix: "demo-boot:"
+  rate-limit: 10
+  rate-limit-window: 60
+  endpoint-rate-limits:
+    "[/api/limited]":
+      requests: 5
+      window: 60
+  blocked-user-agents:
+    - "BadBot"
+    - "sqlmap"
+  custom-error-responses:
+    403: "Blocked by guard (demo)"
+
+spring:
+  application:
+    name: demo-boot
+server:
+  port: 8080
