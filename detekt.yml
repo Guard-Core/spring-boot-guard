@@ -1,0 +1,59 @@
+# Minimal overrides on top of detekt's default rule set (buildUponDefaultConfig = true),
+# in the family style of guard-core-jvm's detekt.yml: each relaxation names the reason.
+build:
+  maxIssues: 0
+
+complexity:
+  LongMethod:
+    # The guard.* properties applier (GuardPropertiesMapper.applyTo), the Guard* annotation
+    # applier (AnnotationRouteConfigurator.apply) and the wide-binding test are one line/branch
+    # per facade SecurityConfig field - declarative port tables, not logic.
+    threshold: 300
+  CyclomaticComplexMethod:
+    # Same table dispatchers: one branch per field/factory (122 / 25 entries).
+    threshold: 130
+  TooManyFunctions:
+    # GuardMiddleware mirrors the python SecurityMiddleware surface 1:1 (middleware.py).
+    thresholdInClasses: 20
+  LongParameterList:
+    # Guard* annotation attributes mirror the python decorator factory parameter surface 1:1
+    # (the 7-attribute behavior rule is the BehaviorRuleConfig surface).
+    active: false
+
+exceptions:
+  TooGenericExceptionCaught:
+    # HandlerMapping.getHandler throws arbitrary mapping exceptions by contract; the filter
+    # treats every failure as "no route" exactly like the fastapi-guard _route_match
+    # try/except (middleware.py:447-455).
+    active: false
+  SwallowedException:
+    # Same _route_match port: the exception is the "route did not match" signal.
+    active: false
+
+naming:
+  MatchingDeclarationName:
+    active: false
+
+style:
+  LoopWithTooManyJumpStatements:
+    # The bounded body-read loop mirrors body_reader.py's pull/pull-limit/EOF structure.
+    active: false
+  MagicNumber:
+    # Annotation defaults, stream-growth constants and status codes mirror the reference
+    # adapter and the python decorator factory defaults 1:1.
+    active: false
+  ReturnCount:
+    # Scalar normalization returns early per conversion branch.
+    active: false
+  UnusedParameter:
+    # Annotation-driven controller signatures keep the parameter for framework binding.
+    active: false
+  UseRequire:
+    # The python factories raise ValueError-shaped IllegalArgumentException guards.
+    active: false
+
+empty-blocks:
+  EmptyFunctionBlock:
+    # Protocol fakes in tests implement surface-only members (FixedCountryGeoHandler).
+    active: false
+

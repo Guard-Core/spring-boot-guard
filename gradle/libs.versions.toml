@@ -1,12 +1,25 @@
 [versions]
 kotlin = "2.4.21"
+coroutines = "1.11.0"
 springBoot = "3.5.16"
 spotless = "8.10.4"
 detekt = "1.23.8"
+# Engine facade coordinates: substituted with the pinned includeBuild checkout
+# (see settings.gradle.kts) until the artifact publishes to Maven Central.
+guardCore = "4.3.2"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
-spring-boot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure", version.ref = "springBoot" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+spring-boot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "springBoot" }
+spring-boot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure" }
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-web = { module = "org.springframework:spring-web" }
+spring-webmvc = { module = "org.springframework:spring-webmvc" }
+jakarta-servlet-api = { module = "jakarta.servlet:jakarta.servlet-api" }
+guard-core = { module = "com.guardcore:guard-core", version.ref = "guardCore" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

@@ -25,6 +25,17 @@ jobs:
         with:
           persist-credentials: false
 
+      # The engine dependency: guard-core-jvm at the PINNED REF (5f4ea56), checked
+      # out as the sibling directory ./guard-core-jvm and substituted for the
+      # declared com.guardcore:guard-core coordinates by settings.gradle.kts.
+      - name: Checkout engine (guard-core-jvm @ 5f4ea56)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Guard-Core/guard-core-jvm
+          ref: 5f4ea56
+          path: guard-core-jvm
+          persist-credentials: false
+
       - name: Set up JDK 17
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
@@ -34,8 +45,22 @@ jobs:
       # TODO: wire gradle/actions/wrapper-validation here once an in-org repo
       # pins a SHA for it; no Guard-Core repo references it yet.
 
+      # The redis-backed integration tests (rate limiting through the facade
+      # RateLimitManager) need Redis; they skip when it is unreachable.
+      - name: Start Redis
+        run: |
+          docker run -d --name guard-redis -p 6379:6379 redis:7-alpine
+          for i in $(seq 1 30); do
+            if docker exec guard-redis redis-cli ping | grep -q PONG; then break; fi
+            sleep 1
+          done
+
       - name: Build and test
         run: ./gradlew build --no-daemon
+
+      - name: Stop Redis
+        if: always()
+        run: docker rm -f guard-redis || true
 
   ci:
     needs: [build]
