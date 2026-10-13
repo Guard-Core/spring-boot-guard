@@ -167,7 +167,11 @@ service container); redis-backed tests skip when no server answers.
 
 ## Telemetry agent
 
-The adapter never builds the agent itself. Register a guard-agent-jvm handler as an `AgentHandlerProtocol` bean and set `guard.enable-agent=true` (with `guard.agent-api-key`, which the engine config requires when the agent is enabled). The auto-configuration hands the bean to `GuardMiddleware`, which starts it on initialization and stops it, flushing its buffer, when the application context closes:
+The adapter never builds the agent itself. Register a guard-agent-jvm handler as an `AgentHandlerProtocol` bean and set `guard.enable-agent=true` (with `guard.agent-api-key`, which the engine config requires when the agent is enabled). The auto-configuration hands the bean to `GuardMiddleware`, which starts it on initialization and stops it, flushing its buffer, when the application context closes. Exactly one `AgentHandlerProtocol` bean is used: two beans fail startup with `NoUniqueBeanDefinitionException` unless one is `@Primary`. Add the agent to your own build:
+
+```kotlin
+implementation("com.guard-core:guard-agent-jvm:3.2.3")
+```
 
 ```kotlin
 import com.guardcore.agent.GuardAgent
