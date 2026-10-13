@@ -25,15 +25,15 @@ jobs:
         with:
           persist-credentials: false
 
-      # The engine dependency: guard-core-jvm pinned at 5f4ea56 (full SHA for the
+      # The engine dependency: guard-core-jvm pinned at 2415a77 (full SHA for the
       # actions/checkout fetch), checked
       # out as the sibling directory ./guard-core-jvm and substituted for the
       # declared com.guardcore:guard-core coordinates by settings.gradle.kts.
-      - name: Checkout engine (guard-core-jvm @ 5f4ea56)
+      - name: Checkout engine (guard-core-jvm @ 2415a77)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: Guard-Core/guard-core-jvm
-          ref: 5f4ea56ab026f00313dfd840ab7d05757afb6400
+          ref: 2415a77b35f99dbaa96ad821b7ef4571992e18f4
           path: guard-core-jvm
           persist-credentials: false
 
