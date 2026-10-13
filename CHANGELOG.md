@@ -4,6 +4,7 @@
 
 ### Changed
 
+- Telemetry agent support: an `AgentHandlerProtocol` bean (for example guard-agent-jvm's `GuardAgentTelemetry`) is now injected into `GuardMiddleware` by the auto-configuration, adopted into the engine composite on initialization, and stopped through the new `GuardMiddleware.shutdown()` when the context closes. Before this, `guard.enable-agent=true` always degraded with a "W7 artifact" message, because the middleware had no way to receive a handler. The degrade path now only applies when no handler bean is registered. The pinned guard-core-jvm engine ref moves to 9067b7b, whose agent telemetry wiring fix (Guard-Core/guard-core-jvm#48) the handler needs to receive anything.
 - Dependencies: netty is pinned to 4.1.139.Final through `platform(io.netty:netty-bom)`. lettuce-core 6.8.2 declares netty 4.1.125, which carries twelve advisories fixed by 4.1.137 at the latest. The pin is declared here as well as in the guard-core-jvm facade, so this lockfile stays the same whichever engine revision the build resolves. The four netty osv-scanner suppressions are removed; the Spring Boot test-scope suppressions stay.
 
 ## [1.0.0] - 2026-10-13

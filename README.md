@@ -132,7 +132,7 @@ logs the same "eager init not honored" warning as fastapi-guard.
 
 The engine artifact `com.guard-core:guard-core` (groupId is the Central Portal namespace; Kotlin
 packages stay `com.guardcore.*`) is on Maven Central for consumers. This repository's own build pins the engine from source instead: CI and local builds check out `Guard-Core/guard-core-jvm` at the
-pinned ref `2415a77` as the sibling directory `./guard-core-jvm`, and `settings.gradle.kts`
+pinned ref `9067b7b` as the sibling directory `./guard-core-jvm`, and `settings.gradle.kts`
 substitutes the declared coordinates `com.guard-core:guard-core:4.3.3` /
 `com.guard-core:guard-core-engine:4.3.3` with the included build's projects (the Gradle analog of
 the Rust path+version pattern). The declared dependency coordinates stay
@@ -152,7 +152,7 @@ Local checkout:
 
 ```bash
 git clone https://github.com/Guard-Core/guard-core-jvm.git guard-core-jvm
-git -C guard-core-jvm checkout 2415a77
+git -C guard-core-jvm checkout 9067b7b
 ./gradlew build
 ```
 
@@ -164,6 +164,32 @@ The engine directory resolves in order: `-PguardCoreJvmDir=<path>`, `GUARD_CORE_
 Rate limiting, IP banning, and behavioral tracking run through the facade managers against any
 Redis 6+ (`guard.redis-url`). The test suite uses the live `localhost:6379` (CI wires a redis
 service container); redis-backed tests skip when no server answers.
+
+## Telemetry agent
+
+The adapter never builds the agent itself. Register a guard-agent-jvm handler as an `AgentHandlerProtocol` bean and set `guard.enable-agent=true` (with `guard.agent-api-key`, which the engine config requires when the agent is enabled). The auto-configuration hands the bean to `GuardMiddleware`, which starts it on initialization and stops it, flushing its buffer, when the application context closes:
+
+```kotlin
+import com.guardcore.agent.GuardAgent
+import com.guardcore.agent.GuardAgentTelemetry
+import com.guardcore.agent.defaultConfig
+import com.guardcore.protocols.AgentHandlerProtocol
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+
+@Configuration
+class GuardAgentConfig {
+    @Bean
+    fun guardAgentTelemetry(): AgentHandlerProtocol {
+        val cfg = defaultConfig()
+        cfg.apiKey = "YOUR_API_KEY"
+        cfg.projectId = "YOUR_PROJECT_ID"
+        return GuardAgentTelemetry(GuardAgent.create(cfg))
+    }
+}
+```
+
+With `guard.enable-agent=true` and no such bean, the middleware degrades like the reference adapter: it logs the missing handler and continues without agent functionality (or fails startup when `guard.agent-strict=true`).
 
 ## Example
 
