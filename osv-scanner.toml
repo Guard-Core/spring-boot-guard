@@ -13,28 +13,28 @@
 # test-scope packages that consumers resolve at their own Boot-managed
 # versions (spring-webmvc, tomcat, jackson, log4j-api).
 
-# --- netty: facade transitives (io.lettuce:lettuce-core 6.7.1.RELEASE, the
+# --- netty: facade transitives (io.lettuce:lettuce-core 6.8.2.RELEASE, the
 # pinned Redis client). Guard usage connects Lettuce to a single
 # user-configured Redis endpoint, so the affected netty surfaces (SniHandler
 # traversal, compressed-decode paths, DNS resolver spoofing) are not
-# attacker-reachable in this deployment shape. The pin moves with the next
-# lettuce upgrade at the next synchronized train; remove these entries then.
+# attacker-reachable in this deployment shape. Spring Boot's BOM resolves
+# netty 4.1.135 here; remove each entry once a fixed netty is in the graph.
 
 [[IgnoredVulns]]
 id = "GHSA-c4c3-7fpv-j4q5"
-reason = "netty-handler 4.1.135 transitive via the facade's pinned lettuce-core 6.7.1; single-endpoint Redis usage, SniHandler path not attacker-reachable; removed at the next lettuce upgrade"
+reason = "netty-handler 4.1.135 transitive via the facade's pinned lettuce-core 6.8.2; single-endpoint Redis usage, SniHandler path not attacker-reachable; removed once the lettuce graph reaches a fixed netty"
 
 [[IgnoredVulns]]
 id = "GHSA-fccg-mwvh-qqg4"
-reason = "netty-handler 4.1.135 transitive via the facade's pinned lettuce-core 6.7.1; single-endpoint Redis usage, handler path not attacker-reachable; removed at the next lettuce upgrade"
+reason = "netty-handler 4.1.135 transitive via the facade's pinned lettuce-core 6.8.2; single-endpoint Redis usage, handler path not attacker-reachable; removed once the lettuce graph reaches a fixed netty"
 
 [[IgnoredVulns]]
 id = "GHSA-558v-64gr-wgg4"
-reason = "netty-codec 4.1.135 transitive via the facade's pinned lettuce-core 6.7.1; single-endpoint Redis usage, codec path not attacker-reachable; removed at the next lettuce upgrade"
+reason = "netty-codec 4.1.135 transitive via the facade's pinned lettuce-core 6.8.2; single-endpoint Redis usage, codec path not attacker-reachable; removed once the lettuce graph reaches a fixed netty"
 
 [[IgnoredVulns]]
 id = "GHSA-mfg7-5gfp-c4w3"
-reason = "netty-codec-dns 4.1.135 transitive via the facade's pinned lettuce-core 6.7.1; no DNS-resolver usage (single configured endpoint); removed at the next lettuce upgrade"
+reason = "netty-codec-dns 4.1.135 transitive via the facade's pinned lettuce-core 6.8.2; no DNS-resolver usage (single configured endpoint); removed once the lettuce graph reaches a fixed netty"
 
 # --- spring-webmvc 6.2.19: compileOnly + test-scope here (testImplementation
 # spring-boot-starter-web); NOT shipped by the adapter POM. Consumers resolve

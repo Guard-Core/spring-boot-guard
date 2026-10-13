@@ -7,8 +7,7 @@ pipeline runs per request, error responses come byte-exact from the facade
 response factory, and the `guard.*` property surface reaches every
 `SecurityConfig` field.
 
-- **Status**: 1.0.0-SNAPSHOT, pre-release (the artifact ships with the first
-  synchronized release)
+- **Status**: 1.0.0, released (the first synchronized release)
 - **Engine**: `com.guard-core:guard-core:4.3.3` (built from source through a
   composite build, see [Installation](installation.md))
 - **Parity**: the engine's

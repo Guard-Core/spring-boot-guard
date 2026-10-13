@@ -1,6 +1,13 @@
 # Changelog
 
-## [Unreleased]
+## [1.0.0] - 2026-10-13
+
+### Changed (release train)
+
+- First Maven Central release (`com.guard-core:spring-boot-guard:1.0.0`) against guard-core-jvm 4.3.3.
+- Dependencies: the facade's lettuce-core moves to 6.8.2.RELEASE and slf4j-api to 2.0.20 (netty stays on the Spring Boot BOM's 4.1.135), lockfile regenerated.
+- Dependency locking ignores the family's own `com.guard-core:*` artifacts. The release publish job resolves the engine from Maven Central instead of the composite build, and those modules were absent from the lock state, so the publish build failed lock validation.
+- The pinned guard-core-jvm engine ref moves to the 4.3.3 release commit.
 
 ### Changed (W10, the 8.1.0 parity assessment + the engine-pin sync; nothing released)
 

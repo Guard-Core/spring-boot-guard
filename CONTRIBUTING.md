@@ -22,7 +22,7 @@ side in the same directory) at the pinned ref:
 
 ```bash
 git clone https://github.com/Guard-Core/guard-core-jvm ../guard-core-jvm
-git -C ../guard-core-jvm checkout 5f4ea56
+git -C ../guard-core-jvm checkout 2415a77
 ./gradlew build          # detekt + ktfmt check + tests (redis-backed tests skip when redis is down)
 ```
 
