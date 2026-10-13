@@ -6,7 +6,7 @@ spotless = "8.10.4"
 detekt = "1.23.8"
 # Engine facade coordinates (groupId com.guard-core, the Central Portal namespace): substituted with the pinned includeBuild checkout
 # (see settings.gradle.kts) until the artifact publishes to Maven Central.
-guardCore = "4.3.2"
+guardCore = "4.3.3"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }

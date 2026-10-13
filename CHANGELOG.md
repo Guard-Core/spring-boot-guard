@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Changed (W10, the 8.1.0 parity assessment + the engine-pin sync; nothing released)
+
+- fastapi-guard 8.1.0 parity: the PureASGI idiom maps to this adapter's native `OncePerRequestFilter` envelope (`GuardFilter`); assessment in docs/adapter-parity-8.1.0.md. Verdict: the no-downstream-cancel and replaying-receive properties hold natively; unbuffered response streaming does not (the `ContentCachingResponseWrapper` buffers by design so the classic post-response features work), reported as a documented trade, zero code changes.
+- The lockstep engine pin moves with the train: `guardCore` 4.3.2 -> 4.3.3 (gradle/libs.versions.toml + the coordinate mentions), mirroring the guard-core-jvm 4.3.3 parity release. Composite builds substitute the included checkout; the declared coordinate matters only at composite-OFF release time, when the engine 4.3.3 artifacts will be live (the pre-flight gate enforces engine-first).
+
 ### Added (W6, pre-1.0.0 development on 1.0.0-SNAPSHOT; nothing released)
 
 - Real adapter implementation over the guard-core-jvm facade (engine 4.3.2, pinned ref 5f4ea56

@@ -9,7 +9,7 @@ response factory, and the `guard.*` property surface reaches every
 
 - **Status**: 1.0.0-SNAPSHOT, pre-release (the artifact ships with the first
   synchronized release)
-- **Engine**: `com.guard-core:guard-core:4.3.2` (built from source through a
+- **Engine**: `com.guard-core:guard-core:4.3.3` (built from source through a
   composite build, see [Installation](installation.md))
 - **Parity**: the engine's
   [every-feature matrix](https://github.com/Guard-Core/guard-core-jvm/blob/master/docs/every-feature-matrix.md)
