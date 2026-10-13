@@ -37,6 +37,7 @@ dependencies {
   // The engine facade: com.guard-core:guard-core:4.3.3, substituted with the
   // pinned guard-core-jvm includeBuild checkout (settings.gradle.kts).
   api(libs.guard.core)
+  implementation(platform(libs.netty.bom))
 
   // Spring's Kotlin handler introspection (suspend-fun detection) requires kotlin-reflect at
   // runtime whenever a Kotlin handler or the Kotlin adapter classes are exercised.
