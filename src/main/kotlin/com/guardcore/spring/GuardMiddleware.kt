@@ -442,9 +442,9 @@ public class GuardMiddleware(
    * Python `shutdown_agent_integrations` on application shutdown: stops the composite, which stops
    * the injected agent and flushes its buffer. Spring calls it as the bean's inferred destroy
    * method. Runs under [initMutex] so it cannot interleave with a first-request [initialize]. When
-   * initialization never ran the composite does not exist, so the injected handler is stopped
-   * directly (its stop is idempotent). It also closes the middleware's own [redisHandler], which
-   * Spring constructs and therefore owns. Safe to call twice.
+   * no composite was built (initialization never ran or stopped early), the injected handler is
+   * stopped directly (its stop is idempotent). It also closes the middleware's own [redisHandler],
+   * which Spring constructs and therefore owns. Safe to call twice.
    */
   public fun shutdown() {
     kotlinx.coroutines.runBlocking {
@@ -453,7 +453,7 @@ public class GuardMiddleware(
           return@withLock
         }
         shutDown = true
-        if (initialized) {
+        if (handlerInitializer.compositeHandler != null) {
           handlerInitializer.shutdownAgentIntegrations()
         } else {
           injectedAgentHandler?.stop()
