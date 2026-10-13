@@ -1,7 +1,7 @@
 [versions]
 kotlin = "2.4.21"
 coroutines = "1.11.0"
-springBoot = "3.5.16"
+springBoot = "4.1.1"
 spotless = "8.10.4"
 detekt = "1.23.8"
 # Engine facade coordinates (groupId com.guard-core, the Central Portal namespace): substituted with the pinned includeBuild checkout
