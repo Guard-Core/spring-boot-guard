@@ -164,6 +164,8 @@ public class GuardMiddleware(
 
   private var initialized: Boolean = false
 
+  private var shutDown: Boolean = false
+
   init {
     // Host-side seam registration (the facade's documented host contract, CoreTestSupport.kt:132 /
     // GuardCore.kt:15): wires the detection-engine seams (user-agent matcher G-5, straddle overlap)
@@ -439,10 +441,26 @@ public class GuardMiddleware(
   /**
    * Python `shutdown_agent_integrations` on application shutdown: stops the composite, which stops
    * the injected agent and flushes its buffer. Spring calls it as the bean's inferred destroy
-   * method.
+   * method. Runs under [initMutex] so it cannot interleave with a first-request [initialize]. When
+   * no composite was built (initialization never ran or stopped early), the injected handler is
+   * stopped directly (its stop is idempotent). It also closes the middleware's own [redisHandler],
+   * which Spring constructs and therefore owns. Safe to call twice.
    */
   public fun shutdown() {
-    kotlinx.coroutines.runBlocking { handlerInitializer.shutdownAgentIntegrations() }
+    kotlinx.coroutines.runBlocking {
+      initMutex.withLock {
+        if (shutDown) {
+          return@withLock
+        }
+        shutDown = true
+        if (handlerInitializer.compositeHandler != null) {
+          handlerInitializer.shutdownAgentIntegrations()
+        } else {
+          injectedAgentHandler?.stop()
+        }
+        redisHandler?.close()
+      }
+    }
   }
 
   /**

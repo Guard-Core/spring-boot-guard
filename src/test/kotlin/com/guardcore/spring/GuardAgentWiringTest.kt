@@ -3,12 +3,17 @@ package com.guardcore.spring
 import com.guardcore.config.SecurityConfig
 import com.guardcore.config.SecurityConfigBuilder
 import com.guardcore.core.events.AgentTelemetryMember
+import com.guardcore.errors.GuardRedisError
 import com.guardcore.protocols.AgentHandlerProtocol
 import com.guardcore.protocols.RedisHandlerProtocol
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.WebApplicationType
+import org.springframework.boot.builder.SpringApplicationBuilder
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
@@ -96,6 +101,78 @@ public class GuardAgentWiringTest {
     assertThat(telemetry.metrics.map { it["metric_type"] }).containsExactly("response_time")
 
     middleware.shutdown()
+    assertThat(telemetry.stops).isEqualTo(1)
+  }
+
+  @Test
+  public fun `shutdown without initialize stops the injected handler once`() {
+    val telemetry = RecordingTelemetry()
+    val middleware = GuardMiddleware(agentConfig(), injectedAgentHandler = telemetry)
+    middleware.shutdown()
+    assertThat(telemetry.stops).isEqualTo(1)
+    assertThat(telemetry.starts).isZero()
+  }
+
+  @Test
+  public fun `shutdown twice stops the handler once`() {
+    val telemetry = RecordingTelemetry()
+    val middleware = GuardMiddleware(agentConfig(), injectedAgentHandler = telemetry)
+    runBlocking { middleware.initialize() }
+    middleware.shutdown()
+    middleware.shutdown()
+    assertThat(telemetry.stops).isEqualTo(1)
+
+    val never = RecordingTelemetry()
+    val fresh = GuardMiddleware(agentConfig(), injectedAgentHandler = never)
+    fresh.shutdown()
+    fresh.shutdown()
+    assertThat(never.stops).isEqualTo(1)
+  }
+
+  @Test
+  public fun `shutdown closes the middleware redis handler and is safe twice`() {
+    assumeTrue(
+        RedisRateLimitIntegrationTest.redisAvailable(),
+        "live redis on localhost:6379 required",
+    )
+    val config =
+        SecurityConfigBuilder()
+            .apply {
+              enableRedis = true
+              redisUrl = "redis://localhost:6379"
+              redisPrefix = "guard-sb-shutdown-it"
+            }
+            .build()
+    val middleware = GuardMiddleware(config)
+    val redis = middleware.redisHandler!!
+    runBlocking { redis.withConnection { it } }
+
+    middleware.shutdown()
+    middleware.shutdown()
+
+    assertThatThrownBy { runBlocking { redis.withConnection { it } } }
+        .isInstanceOf(GuardRedisError::class.java)
+        .hasMessageContaining("closed")
+  }
+
+  @Test
+  public fun `closing the Spring context stops the agent bean`() {
+    val context =
+        SpringApplicationBuilder(GuardTestApp::class.java, AgentBeanConfig::class.java)
+            .web(WebApplicationType.SERVLET)
+            .properties(
+                "server.port=0",
+                "guard.enable-redis=false",
+                "guard.enable-agent=true",
+                "guard.agent-api-key=test-key",
+            )
+            .run()
+    val telemetry = context.getBean(RecordingTelemetry::class.java)
+    runBlocking { context.getBean(GuardMiddleware::class.java).initialize() }
+    assertThat(telemetry.starts).isEqualTo(1)
+    assertThat(telemetry.stops).isZero()
+
+    context.close()
     assertThat(telemetry.stops).isEqualTo(1)
   }
 }
