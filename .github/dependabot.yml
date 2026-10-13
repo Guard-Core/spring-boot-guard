@@ -13,6 +13,6 @@ updates:
       gradle-deps:
         patterns:
           - "*"
-ignore:
-  - dependency-name: "org.springframework.boot:spring-boot-dependencies"
-    update-types: ["version-update:semver-major"]
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-dependencies"
+        update-types: ["version-update:semver-major"]
