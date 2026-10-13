@@ -7,7 +7,7 @@ routes, live Redis-backed rate limiting, and per-route decorator configs.
 git clone https://github.com/Guard-Core/spring-boot-guard.git
 cd spring-boot-guard
 git clone https://github.com/Guard-Core/guard-core-jvm.git guard-core-jvm
-git -C guard-core-jvm checkout 2415a77
+git -C guard-core-jvm checkout 9067b7b
 docker run -d -p 6379:6379 redis:7-alpine
 ./gradlew :examples:demo-boot:bootRun
 ```
