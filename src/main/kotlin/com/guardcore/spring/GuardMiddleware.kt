@@ -7,6 +7,7 @@ import com.guardcore.core.bypass.BypassContext
 import com.guardcore.core.bypass.BypassHandler
 import com.guardcore.core.checks.ChecksFactory
 import com.guardcore.core.checks.SecurityCheckPipeline
+import com.guardcore.core.events.CompositeAgentHandler
 import com.guardcore.core.events.MetricsCollector
 import com.guardcore.core.events.SecurityEventBus
 import com.guardcore.core.initialization.HandlerInitializer
@@ -22,6 +23,7 @@ import com.guardcore.errors.GuardRedisError
 import com.guardcore.handlers.BehaviorRule
 import com.guardcore.handlers.CloudManager
 import com.guardcore.handlers.CorsHandler
+import com.guardcore.handlers.HandlerAgentSink
 import com.guardcore.handlers.RateLimitManager
 import com.guardcore.handlers.RedisManager
 import com.guardcore.handlers.SecurityHeadersManager
@@ -33,6 +35,7 @@ import com.guardcore.protocols.GuardResponse
 import com.guardcore.protocols.GuardResponseFactory
 import com.guardcore.protocols.MiddlewareEventBusProtocol
 import com.guardcore.protocols.MiddlewareResponseFactoryProtocol
+import com.guardcore.protocols.RedisHandlerProtocol
 import com.guardcore.util.IpExtraction
 import com.guardcore.util.LoggingUtils
 import java.util.logging.Logger
@@ -55,6 +58,8 @@ public class GuardMiddleware(
     override val config: SecurityConfig,
     servletResponseFactory: ServletGuardResponseFactory = ServletGuardResponseFactory(),
     decorator: BaseSecurityDecorator? = null,
+    /** An externally supplied agent handler (guard-agent-jvm); null when none is registered. */
+    public val injectedAgentHandler: AgentHandlerProtocol? = null,
 ) : GuardMiddlewareProtocol {
   override val logger: Logger =
       LoggingUtils.setupCustomLogging(config.customLogFile, config.logFormat.pythonName)
@@ -84,9 +89,9 @@ public class GuardMiddleware(
   /** Python `redis_handler` (middleware.py:66-70): Lettuce via the facade manager. */
   public val redisHandler: RedisManager? = if (config.enableRedis) RedisManager(config) else null
 
-  private var agentHandlerField: AgentHandlerProtocol? = null
+  private var agentHandlerField: AgentHandlerProtocol? = injectedAgentHandler
 
-  /** Python `agent_handler` (middleware.py:72-93); guard-agent-jvm ships at W7. */
+  /** Python `agent_handler` (middleware.py:72-93): the injected handler, then the composite. */
   override val agentHandler: AgentHandlerProtocol?
     get() = agentHandlerField
 
@@ -105,11 +110,13 @@ public class GuardMiddleware(
     get() = plainResponseFactory
 
   /** Python `event_bus` (middleware.py:99). */
-  override var eventBus: MiddlewareEventBusProtocol = SecurityEventBus(null, config, geoIpHandler)
+  override var eventBus: MiddlewareEventBusProtocol =
+      SecurityEventBus(injectedAgentHandler as? HandlerAgentSink, config, geoIpHandler)
     private set
 
   /** Python `metrics_collector` (middleware.py:102). */
-  public var metricsCollector: MetricsCollector = MetricsCollector(null, config)
+  public var metricsCollector: MetricsCollector =
+      MetricsCollector(injectedAgentHandler as? HandlerAgentSink, config)
     private set
 
   /** Python `handler_initializer` (middleware.py:104-111). */
@@ -117,7 +124,7 @@ public class GuardMiddleware(
       HandlerInitializer(
           config = config,
           redisHandler = redisHandler,
-          agentHandler = null,
+          agentHandler = injectedAgentHandler,
           geoIpHandler = geoIpHandler,
           rateLimitHandler = rateLimitHandler,
           guardDecorator = guardDecoratorField,
@@ -174,12 +181,13 @@ public class GuardMiddleware(
             BypassContext(config, logger, eventBus, routeResolver, errorResponseFactory, validator),
         )
     behavioralProcessor = buildBehavioralProcessor()
-    if (config.enableAgent) {
-      // guard-agent-jvm lands at W7; mirror the AgentPackageNotInstalledError degrade path
-      // (middleware.py:83-93) until then.
+    if (config.enableAgent && injectedAgentHandler == null) {
+      // The adapter never builds the agent itself: an AgentHandlerProtocol bean is the only agent
+      // source. Mirror the reference AgentPackageNotInstalledError degrade path
+      // (middleware.py:83-93).
       onAgentInitFailed(
-          "Agent enabled but guard-agent-jvm is not available in this build yet " +
-              "(W7 artifact); continuing without agent functionality",
+          "Agent enabled but no agent handler was provided. Register a guard-agent-jvm " +
+              "AgentHandlerProtocol bean (GuardAgentTelemetry), or disable enable_agent.",
           null,
       )
     }
@@ -265,7 +273,11 @@ public class GuardMiddleware(
     handlerInitializer.initializeRedisHandlers()
     handlerInitializer.initializeAgentIntegrations()
 
-    if (handlerInitializer.compositeHandler != null) {
+    val composite = handlerInitializer.compositeHandler
+    if (composite != null) {
+      // Python initialize() lines 719-726: adopt the composite as the agent handler and rebuild
+      // the event bus + metrics collector around it, then the event-dependent contexts.
+      agentHandlerField = CompositeAgentProtocol(composite)
       eventBus = handlerInitializer.buildEventBus(geoIpHandler = geoIpHandler)
       metricsCollector = handlerInitializer.buildMetricsCollector()
       rebuildEventDependentContexts()
@@ -422,5 +434,52 @@ public class GuardMiddleware(
     }
     logger.severe(message)
     logger.warning("Continuing without agent functionality")
+  }
+
+  /**
+   * Python `shutdown_agent_integrations` on application shutdown: stops the composite, which stops
+   * the injected agent and flushes its buffer. Spring calls it as the bean's inferred destroy
+   * method.
+   */
+  public fun shutdown() {
+    kotlinx.coroutines.runBlocking { handlerInitializer.shutdownAgentIntegrations() }
+  }
+
+  /**
+   * The composite handler as the agent protocol (python passes the composite as agent_handler; the
+   * HandlerInitializer builds the same adapter shape over the composite).
+   */
+  private class CompositeAgentProtocol(
+      private val composite: CompositeAgentHandler,
+  ) : AgentHandlerProtocol {
+    override suspend fun initializeRedis(redisHandler: RedisHandlerProtocol) {
+      composite.initializeRedis(redisHandler)
+    }
+
+    override suspend fun sendEvent(event: Any?) {
+      @Suppress("UNCHECKED_CAST")
+      composite.sendEvent((event as? Map<String, Any?>) ?: linkedMapOf())
+    }
+
+    override suspend fun sendMetric(metric: Any?) {
+      @Suppress("UNCHECKED_CAST")
+      composite.sendMetric((metric as? Map<String, Any?>) ?: linkedMapOf())
+    }
+
+    override suspend fun start() {
+      composite.start()
+    }
+
+    override suspend fun stop() {
+      composite.stop()
+    }
+
+    override suspend fun flushBuffer() {
+      composite.flushBuffer()
+    }
+
+    override suspend fun getDynamicRules(): Any? = composite.getDynamicRules()
+
+    override suspend fun healthCheck(): Boolean = composite.healthCheck()
   }
 }

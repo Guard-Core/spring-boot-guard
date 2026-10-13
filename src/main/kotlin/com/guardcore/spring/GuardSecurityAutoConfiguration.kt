@@ -2,6 +2,7 @@ package com.guardcore.spring
 
 import com.guardcore.config.SecurityConfig
 import com.guardcore.config.SecurityConfigBuilder
+import com.guardcore.protocols.AgentHandlerProtocol
 import jakarta.servlet.DispatcherType
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.beans.factory.ObjectProvider
@@ -60,7 +61,13 @@ public open class GuardSecurityAutoConfiguration {
   public open fun guardMiddleware(
       config: SecurityConfig,
       decorator: SpringGuardDecorator,
-  ): GuardMiddleware = GuardMiddleware(config, decorator = decorator)
+      agentHandler: ObjectProvider<AgentHandlerProtocol>,
+  ): GuardMiddleware =
+      GuardMiddleware(
+          config,
+          decorator = decorator,
+          injectedAgentHandler = agentHandler.ifAvailable,
+      )
 
   @Bean
   public open fun guardAnnotationConfigurator(
