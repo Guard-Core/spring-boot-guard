@@ -127,15 +127,20 @@ The engine artifact `com.guard-core:guard-core` (groupId is the Central Portal n
 packages stay `com.guardcore.*`) is not on Maven Central until the W8 release. The build therefore
 pins the engine from source: CI and local builds check out `Guard-Core/guard-core-jvm` at the
 pinned ref `5f4ea56` as the sibling directory `./guard-core-jvm`, and `settings.gradle.kts`
-substitutes the declared coordinates `com.guard-core:guard-core:4.3.2` /
-`com.guard-core:guard-core-engine:4.3.2` with the included build's projects (the Gradle analog of
+substitutes the declared coordinates `com.guard-core:guard-core:4.3.3` /
+`com.guard-core:guard-core-engine:4.3.3` with the included build's projects (the Gradle analog of
 the Rust path+version pattern). The declared dependency coordinates stay
-`com.guard-core:guard-core:4.3.2` (lockstep version per the family versioning law); consumers of a
+`com.guard-core:guard-core:4.3.3` (lockstep version per the family versioning law); consumers of a
 published artifact resolve the real Maven artifact with no composite involved.
 
 Set `GUARD_CORE_USE_COMPOSITE=false` to build without the composite: the declared coordinates then
 resolve from the repositories (mavenLocal first, then Maven Central) - this is how the release
 workflow proves the published artifact graph (docs/release.md).
+
+Adapter parity with the reference middleware releases is assessed per upstream feature release:
+[docs/adapter-parity-8.1.0.md](docs/adapter-parity-8.1.0.md) maps fastapi-guard 8.1.0's
+`PureASGISecurityMiddleware` onto this adapter's `OncePerRequestFilter` idiom (the streaming
+trade is documented there honestly: the response wrapper buffers by design).
 
 Local checkout:
 
