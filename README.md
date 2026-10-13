@@ -35,8 +35,15 @@ next.
 
 ## Install
 
-Not published yet. The first artifact ships with the 1.0.0 release; until then, build from source
-(see "Engine dependency" below) or consume the composite from a sibling checkout.
+Published on Maven Central:
+
+```kotlin
+dependencies {
+    implementation("com.guard-core:spring-boot-guard:1.0.0")
+}
+```
+
+It brings in the engine facade `com.guard-core:guard-core:4.3.3`. To build from source, see "Engine dependency" below, or consume the composite from a sibling checkout.
 
 ## Quick start
 
@@ -124,8 +131,7 @@ logs the same "eager init not honored" warning as fastapi-guard.
 ## Engine dependency (includeBuild + dependency substitution)
 
 The engine artifact `com.guard-core:guard-core` (groupId is the Central Portal namespace; Kotlin
-packages stay `com.guardcore.*`) is not on Maven Central until the W8 release. The build therefore
-pins the engine from source: CI and local builds check out `Guard-Core/guard-core-jvm` at the
+packages stay `com.guardcore.*`) is on Maven Central for consumers. This repository's own build pins the engine from source instead: CI and local builds check out `Guard-Core/guard-core-jvm` at the
 pinned ref `2415a77` as the sibling directory `./guard-core-jvm`, and `settings.gradle.kts`
 substitutes the declared coordinates `com.guard-core:guard-core:4.3.3` /
 `com.guard-core:guard-core-engine:4.3.3` with the included build's projects (the Gradle analog of
