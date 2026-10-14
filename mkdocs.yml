@@ -1,4 +1,5 @@
 site_name: spring-boot-guard
+site_url: https://guard-core.github.io/spring-boot-guard/
 site_description: Application-layer security middleware for Spring Boot, powered by the guard-core-jvm detection engine
 site_author: Renn F
 repo_url: https://github.com/Guard-Core/spring-boot-guard
