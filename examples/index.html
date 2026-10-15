@@ -430,7 +430,7 @@ routes, live Redis-backed rate limiting, and per-route decorator configs.</p>
 <div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Guard-Core/spring-boot-guard.git
 <span class="nb">cd</span><span class="w"> </span>spring-boot-guard
 git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Guard-Core/guard-core-jvm.git<span class="w"> </span>guard-core-jvm
-git<span class="w"> </span>-C<span class="w"> </span>guard-core-jvm<span class="w"> </span>checkout<span class="w"> </span>09dfddf
+git<span class="w"> </span>-C<span class="w"> </span>guard-core-jvm<span class="w"> </span>checkout<span class="w"> </span>db716ec
 docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>-p<span class="w"> </span><span class="m">6379</span>:6379<span class="w"> </span>redis:7-alpine
 ./gradlew<span class="w"> </span>:examples:demo-boot:bootRun
 </code></pre></div>
