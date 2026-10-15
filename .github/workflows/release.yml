@@ -72,11 +72,11 @@ jobs:
           persist-credentials: false
 
       # Same engine checkout as ci.yml (the composite default for tests).
-      - name: Checkout engine (guard-core-jvm @ 9067b7b)
+      - name: Checkout engine (guard-core-jvm @ 09dfddf)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: Guard-Core/guard-core-jvm
-          ref: 9067b7b247d73790cc93b4cb433a1e973265a473
+          ref: 09dfddf77d1b25e7d79a03f8a37fe781ed30f236
           path: guard-core-jvm
           persist-credentials: false
 

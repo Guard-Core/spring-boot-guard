@@ -293,6 +293,9 @@ public class GuardProperties {
   /** python_name: detection_max_scan_values. */
   public var detectionMaxScanValues: Int? = null
 
+  /** python_name: detection_max_scan_seconds. */
+  public var detectionMaxScanSeconds: Double? = null
+
   /** python_name: detection_max_scan_chars. */
   public var detectionMaxScanChars: Int? = null
 
@@ -370,6 +373,9 @@ public class GuardProperties {
 
   /** python_name: excluded_detection_headers. */
   public var excludedDetectionHeaders: Set<String>? = null
+
+  /** python_name: excluded_semantic_detection_headers. */
+  public var excludedSemanticDetectionHeaders: Set<String>? = null
 
   /** python_name: excluded_detection_params. */
   public var excludedDetectionParams: Set<String>? = null

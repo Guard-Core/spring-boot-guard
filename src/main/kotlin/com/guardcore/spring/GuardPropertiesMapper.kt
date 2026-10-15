@@ -127,6 +127,7 @@ public fun GuardProperties.applyTo(builder: SecurityConfigBuilder) {
   detectionMaxBodyInspectBytes?.let { v -> builder.detectionMaxBodyInspectBytes = v }
   detectionMaxScanValues?.let { v -> builder.detectionMaxScanValues = v }
   detectionMaxScanChars?.let { v -> builder.detectionMaxScanChars = v }
+  detectionMaxScanSeconds?.let { v -> builder.detectionMaxScanSeconds = v }
   detectionMaxJsonDepth?.let { v -> builder.detectionMaxJsonDepth = v }
   detectionBinaryMinRunLength?.let { v -> builder.detectionBinaryMinRunLength = v }
   detectionPreserveAttackPatterns?.let { v -> builder.detectionPreserveAttackPatterns = v }
@@ -152,6 +153,7 @@ public fun GuardProperties.applyTo(builder: SecurityConfigBuilder) {
   logfireServiceName?.let { v -> builder.logfireServiceName = v }
   enableEnrichment?.let { v -> builder.enableEnrichment = v }
   excludedDetectionHeaders?.let { v -> builder.excludedDetectionHeaders = v }
+  excludedSemanticDetectionHeaders?.let { v -> builder.excludedSemanticDetectionHeaders = v }
   excludedDetectionParams?.let { v -> builder.excludedDetectionParams = v }
   excludedDetectionBodyFields?.let { v -> builder.excludedDetectionBodyFields = v }
   detectionScanBody?.let { v -> builder.detectionScanBody = v }
