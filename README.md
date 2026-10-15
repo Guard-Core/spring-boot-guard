@@ -132,7 +132,7 @@ logs the same "eager init not honored" warning as fastapi-guard.
 
 The engine artifact `com.guard-core:guard-core` (groupId is the Central Portal namespace; Kotlin
 packages stay `com.guardcore.*`) is on Maven Central for consumers. This repository's own build pins the engine from source instead: CI and local builds check out `Guard-Core/guard-core-jvm` at the
-pinned ref `9067b7b` as the sibling directory `./guard-core-jvm`, and `settings.gradle.kts`
+pinned ref `09dfddf` as the sibling directory `./guard-core-jvm`, and `settings.gradle.kts`
 substitutes the declared coordinates `com.guard-core:guard-core:4.3.3` /
 `com.guard-core:guard-core-engine:4.3.3` with the included build's projects (the Gradle analog of
 the Rust path+version pattern). The declared dependency coordinates stay
@@ -152,7 +152,7 @@ Local checkout:
 
 ```bash
 git clone https://github.com/Guard-Core/guard-core-jvm.git guard-core-jvm
-git -C guard-core-jvm checkout 9067b7b
+git -C guard-core-jvm checkout 09dfddf
 ./gradlew build
 ```
 

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- `guard.excluded-semantic-detection-headers` and `guard.detection-max-scan-seconds` bind to the engine's `excludedSemanticDetectionHeaders` and `detectionMaxScanSeconds`. The engine pin moves to guard-core-jvm 09dfddf, which carries both.
+
 ### Changed
 
 - Telemetry agent support: an `AgentHandlerProtocol` bean (for example guard-agent-jvm's `GuardAgentTelemetry`) is now injected into `GuardMiddleware` by the auto-configuration, adopted into the engine composite on initialization, and stopped through the new `GuardMiddleware.shutdown()` when the context closes. Before this, `guard.enable-agent=true` always degraded with a "W7 artifact" message, because the middleware had no way to receive a handler. The degrade path now only applies when no handler bean is registered. The pinned guard-core-jvm engine ref moves to 9067b7b, whose agent telemetry wiring fix (Guard-Core/guard-core-jvm#48) the handler needs to receive anything.

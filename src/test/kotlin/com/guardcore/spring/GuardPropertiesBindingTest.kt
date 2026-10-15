@@ -93,6 +93,7 @@ public class GuardPropertiesBindingTest {
             "guard.detection-slow-pattern-threshold=0.2",
             "guard.detection-anomaly-emission-cooldown=30.0",
             "guard.detection-threat-score-threshold=0.9",
+            "guard.detection-max-scan-seconds=2.5",
             "guard.redis-socket-connect-timeout=1.25",
             "guard.redis-socket-timeout=1.75",
             "guard.agent-high-watermark-ratio=0.8",
@@ -163,6 +164,7 @@ public class GuardPropertiesBindingTest {
             "guard.log-sensitive-params[0]=password",
             "guard.log-sensitive-body-fields[0]=ssn",
             "guard.excluded-detection-headers[0]=x-internal",
+            "guard.excluded-semantic-detection-headers[0]=x-semantic",
             "guard.excluded-detection-params[0]=token",
             "guard.excluded-detection-body-fields[0]=secret",
             "guard.enabled-detection-categories[0]=sqli",
@@ -206,6 +208,7 @@ public class GuardPropertiesBindingTest {
           assertThat(c.logSensitiveParams).containsExactly("password")
           assertThat(c.logSensitiveBodyFields).containsExactly("ssn")
           assertThat(c.excludedDetectionHeaders).containsExactly("x-internal")
+          assertThat(c.excludedSemanticDetectionHeaders).containsExactly("x-semantic")
           assertThat(c.excludedDetectionParams).containsExactly("token")
           assertThat(c.excludedDetectionBodyFields).containsExactly("secret")
           assertThat(c.enabledDetectionCategories).containsExactly("sqli")
@@ -254,6 +257,7 @@ public class GuardPropertiesBindingTest {
           assertThat(c.detectionSlowPatternThreshold).isEqualTo(0.2)
           assertThat(c.detectionAnomalyEmissionCooldown).isEqualTo(30.0)
           assertThat(c.detectionThreatScoreThreshold).isEqualTo(0.9)
+          assertThat(c.detectionMaxScanSeconds).isEqualTo(2.5)
           assertThat(c.redisSocketConnectTimeout).isEqualTo(1.25)
           assertThat(c.redisSocketTimeout).isEqualTo(1.75)
           assertThat(c.agentHighWatermarkRatio).isEqualTo(0.8)

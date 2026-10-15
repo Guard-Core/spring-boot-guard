@@ -15,7 +15,7 @@ rootProject.name = "demo-boot"
 
 // The adapter and the engine are consumed from source until both publish:
 // the adapter repo sits two levels up and the engine at the pinned ref
-// 9067b7b sits next to it (the same includeBuild convention as the adapter).
+// 09dfddf sits next to it (the same includeBuild convention as the adapter).
 includeBuild("../../") {
   dependencySubstitution {
     substitute(module("com.guardcore:spring-boot-guard")).using(project(":"))
@@ -35,7 +35,7 @@ val engineDir: File = run {
       )
   roots.firstOrNull { it.resolve("settings.gradle.kts").isFile }
       ?: throw GradleException(
-          "Clone Guard-Core/guard-core-jvm at the pinned ref 9067b7b next to the " +
+          "Clone Guard-Core/guard-core-jvm at the pinned ref 09dfddf next to the " +
               "spring-boot-guard repository first (or point -PguardCoreJvmDir / " +
               "GUARD_CORE_JVM_DIR at an existing checkout). Searched: " +
               roots.joinToString(", ") { it.path },
