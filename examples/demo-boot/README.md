@@ -21,12 +21,12 @@ engine's `SecurityConfig` field names).
 
 Prerequisites:
 
-1. Clone Guard-Core/guard-core-jvm at the pinned ref `6cde4af` next to this repository
+1. Clone Guard-Core/guard-core-jvm at the pinned ref `7711606` next to this repository
    (the engine builds from source via includeBuild until the artifacts publish):
 
    ```bash
    git clone https://github.com/Guard-Core/guard-core-jvm.git guard-core-jvm
-   git -C guard-core-jvm checkout 6cde4af
+   git -C guard-core-jvm checkout 7711606
    ```
 
 2. A Redis on `localhost:6379` (rate limiting), or set `guard.enable-redis: false` in
