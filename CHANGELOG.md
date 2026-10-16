@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [1.1.0] - 2026-10-16
 
 ### Added
 
@@ -8,6 +8,7 @@
 
 ### Changed
 
+- Builds against guard-core-jvm 4.4.0 (`guardCore = "4.4.0"`, now on Maven Central), and the pinned guard-core-jvm engine ref moves to 7711606, the v4.4.0 release commit.
 - The pinned guard-core-jvm engine ref moves to 6cde4af (guard-core-jvm master, the 4.4.0 line), so CI tests the engine code that ships in 4.4.0. It adds the empty-whitelist fix (an empty global whitelist now means no whitelist, guard-core-jvm#57) on top of db716ec. The lockstep `guardCore` version stays 4.3.3 until 4.4.0 is on Maven Central.
 - The pinned guard-core-jvm engine ref moves to db716ec, which carries the detection scan budget, semantic header handling and cookie split (guard-core-jvm#53) and the dynamic rules overlay (guard-core-jvm#55).
 - Telemetry agent support: an `AgentHandlerProtocol` bean (for example guard-agent-jvm's `GuardAgentTelemetry`) is now injected into `GuardMiddleware` by the auto-configuration, adopted into the engine composite on initialization, and stopped through the new `GuardMiddleware.shutdown()` when the context closes. Before this, `guard.enable-agent=true` always degraded with a "W7 artifact" message, because the middleware had no way to receive a handler. The degrade path now only applies when no handler bean is registered. The pinned guard-core-jvm engine ref moves to 9067b7b, whose agent telemetry wiring fix (Guard-Core/guard-core-jvm#48) the handler needs to receive anything.
