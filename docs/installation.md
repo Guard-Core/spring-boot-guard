@@ -20,6 +20,37 @@ dependencies {
 The group ID is `com.guard-core` (the Central Portal namespace); Kotlin
 packages stay `com.guardcore.*`.
 
+## Kotlin and coroutines versions under Spring Boot dependency management
+
+Spring Boot 3.5 manages `kotlin.version` 1.9.25, `kotlin-coroutines.version` 1.8.1 and `kotlin-serialization.version` 1.6.3, and dependency management overrides the versions this library was built with (Kotlin 2.4.21, coroutines 1.11.0). A Java application that imports the `spring-boot-dependencies` BOM, or uses the Spring Boot Gradle plugin with `io.spring.dependency-management`, therefore fails at startup with `NoSuchMethodError: kotlinx.coroutines.BuildersKt.runBlockingK$default` (coroutines 1.11.0 added `runBlockingK`), and with coroutines 1.11.0 on a Kotlin 1.9 stdlib every request fails with `ClassNotFoundException: kotlin.coroutines.jvm.internal.SpillingKt`. Align both versions. Serialization can stay on the managed 1.6.3.
+
+Gradle with the Spring Boot plugin and `io.spring.dependency-management`:
+
+```groovy
+ext['kotlin.version'] = '2.4.21'
+ext['kotlin-coroutines.version'] = '1.11.0'
+```
+
+Maven with the BOM imported (declare these imports before `spring-boot-dependencies`, the first declaration wins):
+
+```xml
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId><artifactId>kotlin-bom</artifactId>
+      <version>2.4.21</version><type>pom</type><scope>import</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.kotlinx</groupId><artifactId>kotlinx-coroutines-bom</artifactId>
+      <version>1.11.0</version><type>pom</type><scope>import</scope>
+    </dependency>
+    <!-- then the spring-boot-dependencies import -->
+  </dependencies>
+</dependencyManagement>
+```
+
+With `spring-boot-starter-parent` as the parent, set `<kotlin.version>2.4.21</kotlin.version>` and `<kotlin-coroutines.version>1.11.0</kotlin-coroutines.version>` as properties instead.
+
 ## Engine dependency (includeBuild + dependency substitution)
 
 Consumers resolve the engine artifact `com.guard-core:guard-core` from Maven Central. This repository's own build pins the engine from source instead: CI and

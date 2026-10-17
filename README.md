@@ -45,6 +45,37 @@ dependencies {
 
 It brings in the engine facade `com.guard-core:guard-core:4.3.3`. To build from source, see "Engine dependency" below, or consume the composite from a sibling checkout.
 
+## Kotlin and coroutines versions under Spring Boot dependency management
+
+Spring Boot 3.5 manages `kotlin.version` 1.9.25, `kotlin-coroutines.version` 1.8.1 and `kotlin-serialization.version` 1.6.3, and dependency management overrides the versions this library was built with (Kotlin 2.4.21, coroutines 1.11.0). A Java application that imports the `spring-boot-dependencies` BOM, or uses the Spring Boot Gradle plugin with `io.spring.dependency-management`, therefore fails at startup with `NoSuchMethodError: kotlinx.coroutines.BuildersKt.runBlockingK$default` (coroutines 1.11.0 added `runBlockingK`), and with coroutines 1.11.0 on a Kotlin 1.9 stdlib every request fails with `ClassNotFoundException: kotlin.coroutines.jvm.internal.SpillingKt`. Align both versions. Serialization can stay on the managed 1.6.3.
+
+Gradle with the Spring Boot plugin and `io.spring.dependency-management`:
+
+```groovy
+ext['kotlin.version'] = '2.4.21'
+ext['kotlin-coroutines.version'] = '1.11.0'
+```
+
+Maven with the BOM imported (declare these imports before `spring-boot-dependencies`, the first declaration wins):
+
+```xml
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId><artifactId>kotlin-bom</artifactId>
+      <version>2.4.21</version><type>pom</type><scope>import</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jetbrains.kotlinx</groupId><artifactId>kotlinx-coroutines-bom</artifactId>
+      <version>1.11.0</version><type>pom</type><scope>import</scope>
+    </dependency>
+    <!-- then the spring-boot-dependencies import -->
+  </dependencies>
+</dependencyManagement>
+```
+
+With `spring-boot-starter-parent` as the parent, set `<kotlin.version>2.4.21</kotlin.version>` and `<kotlin-coroutines.version>1.11.0</kotlin-coroutines.version>` as properties instead.
+
 ## Quick start
 
 ```kotlin
@@ -145,8 +176,7 @@ workflow proves the published artifact graph (docs/release.md).
 
 Adapter parity with the reference middleware releases is assessed per upstream feature release:
 [docs/adapter-parity-8.1.0.md](docs/adapter-parity-8.1.0.md) maps fastapi-guard 8.1.0's
-`PureASGISecurityMiddleware` onto this adapter's `OncePerRequestFilter` idiom (the streaming
-trade is documented there honestly: the response wrapper buffers by design).
+`PureASGISecurityMiddleware` onto this adapter's `OncePerRequestFilter` idiom. Responses stream unbuffered (SSE, `StreamingResponseBody`, file downloads): security headers, CORS, metrics and status based return rules apply just before the response commits. The response is buffered only on requests where a `custom_response_modifier` is configured or a route or global return-pattern rule inspects the body (`guard.behavior-scan-response-body=true` with a pattern that is not `status:`).
 
 Local checkout:
 

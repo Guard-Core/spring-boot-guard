@@ -45,14 +45,13 @@ public class GuardFilter(
       filterChain: FilterChain,
   ) {
     val guardRequestWrapper = GuardHttpServletRequest(request)
-    val responseWrapper = ContentCachingResponseWrapper(response)
     val guardRequest = ServletGuardRequest(guardRequestWrapper)
 
     // Python `_ensure_initialized` + the GuardRedisError 503 path (middleware.py:582-587).
     val initFailure = kotlinx.coroutines.runBlocking { middleware.ensureInitialized() }
     if (initFailure != null) {
       injectCorsHeaders(guardRequest.headers, initFailure)
-      finish(initFailure, responseWrapper, response)
+      finish(initFailure, response)
       return
     }
 
@@ -63,7 +62,7 @@ public class GuardFilter(
       handlePreflight(guardRequest)
     }
     if (preflightResponse != null) {
-      finish(preflightResponse, responseWrapper, response)
+      finish(preflightResponse, response)
       return
     }
 
@@ -74,33 +73,39 @@ public class GuardFilter(
     }
     if (passthroughResponse != null) {
       injectCorsHeaders(guardRequest.headers, passthroughResponse)
-      finish(passthroughResponse, responseWrapper, response)
+      finish(passthroughResponse, response)
       return
     }
 
     // Python dispatch: client IP -> route config -> security bypass (middleware.py:603-612).
-    val bypassStage: Pair<String, RouteConfig?>? =
+    val bypassStage: Triple<String, RouteConfig?, HttpServletResponse>? =
         kotlinx.coroutines.runBlocking {
           val ip = middleware.extractClientIp(guardRequest)
           val routeConfig = middleware.routeResolver.getRouteConfig(guardRequest)
+          val downstream = downstreamResponseFor(response, routeConfig)
+          if (downstream is CommitHookResponse) {
+            downstream.beforeCommit = {
+              injectCorsHeadersIntoWrapper(guardRequest.headers, downstream)
+            }
+          }
           val bypass =
               middleware.bypassHandler.handleSecurityBypass(
                   guardRequest,
-                  { callNext(guardRequestWrapper, responseWrapper, filterChain) },
+                  { callNext(guardRequestWrapper, downstream, filterChain) },
                   routeConfig,
               )
           if (bypass != null) {
             injectCorsHeaders(guardRequest.headers, bypass)
-            finish(bypass, responseWrapper, response)
+            finish(bypass, response, downstream)
             null
           } else {
-            ip to routeConfig
+            Triple(ip, routeConfig, downstream)
           }
         }
     if (bypassStage == null) {
       return
     }
-    val (clientIp, routeConfig) = bypassStage
+    val (clientIp, routeConfig, responseWrapper) = bypassStage
 
     // Python `_handle_pipeline_block` (middleware.py:560): the 17 fixed-order checks, through the
     // facade's blocking bridge (JavaBridges.executePipelineBlocking).
@@ -110,7 +115,7 @@ public class GuardFilter(
         }
     if (blocked != null) {
       injectCorsHeaders(guardRequest.headers, blocked)
-      finish(blocked, responseWrapper, response)
+      finish(blocked, response)
       return
     }
 
@@ -124,22 +129,93 @@ public class GuardFilter(
 
     // Python: `call_next` (middleware.py:624).
     val startTime = System.nanoTime()
-    try {
+    // Python `_process_response` + CORS injection (middleware.py:627-631). Buffered, it runs once
+    // the chain returns; streaming, just before the response commits (asgi.py http.response.start),
+    // so the body is never held and the status and headers are the ones that reach the client.
+    val processResponse = {
+      val responseTime = (System.nanoTime() - startTime) / 1_000_000_000.0
+      val guardResponse = ServletGuardResponse.wrapping(responseWrapper)
+      runGuardStage {
+        middleware.processResponse(guardRequest, guardResponse, responseTime, routeConfig)
+        null
+      }
+      injectCorsHeadersIntoWrapper(guardRequest.headers, responseWrapper)
+    }
+    if (responseWrapper is CommitHookResponse) {
+      responseWrapper.beforeCommit = processResponse
       filterChain.doFilter(guardRequestWrapper, responseWrapper)
+      completeStreamingResponse(guardRequestWrapper, responseWrapper)
+      return
+    }
+    val buffered = responseWrapper as ContentCachingResponseWrapper
+    try {
+      filterChain.doFilter(guardRequestWrapper, buffered)
     } catch (e: Exception) {
-      runCatching { responseWrapper.copyBodyToResponse() }
+      runCatching { buffered.copyBodyToResponse() }
       throw e
     }
-    val responseTime = (System.nanoTime() - startTime) / 1_000_000_000.0
+    processResponse()
+    buffered.copyBodyToResponse()
+  }
 
-    // Python `_process_response` + CORS injection (middleware.py:627-631).
-    val guardResponse = ServletGuardResponse.wrapping(responseWrapper)
-    runGuardStage {
-      middleware.processResponse(guardRequest, guardResponse, responseTime, routeConfig)
-      null
+  /**
+   * Buffers only when a feature reads the response body: a `custom_response_modifier` (it receives
+   * the body) or a return-pattern rule that is not status based (processor + BehaviorTracker read
+   * the body prefix). Everything else (security headers, CORS, metrics, status rules) needs only
+   * the status and headers, which the streaming flavor supplies without holding the body.
+   */
+  private fun downstreamResponseFor(
+      response: HttpServletResponse,
+      routeConfig: RouteConfig?,
+  ): HttpServletResponse =
+      if (needsResponseBody(routeConfig)) ContentCachingResponseWrapper(response)
+      else CommitHookResponse(response)
+
+  private fun needsResponseBody(routeConfig: RouteConfig?): Boolean {
+    val config = middleware.config
+    if (config.customResponseModifier != null) {
+      return true
     }
-    injectCorsHeadersIntoWrapper(guardRequest.headers, responseWrapper)
-    responseWrapper.copyBodyToResponse()
+    if (!config.behaviorScanResponseBody) {
+      return false
+    }
+    val routePatterns =
+        routeConfig
+            ?.behaviorRules
+            .orEmpty()
+            .filter { it.ruleType == RETURN_PATTERN }
+            .map { it.pattern }
+    val globalPatterns =
+        config.globalBehaviorRules
+            .filter { it.ruleType.pythonName == RETURN_PATTERN }
+            .map { it.pattern }
+    return (routePatterns + globalPatterns).any { it != null && !it.startsWith(STATUS_PATTERN) }
+  }
+
+  /**
+   * Fires the commit hook for responses that never wrote or flushed, and for async handlers
+   * (StreamingResponseBody, SseEmitter, DeferredResult) arms it on completion; their writes arrive
+   * later through the same wrapper and fire it at the first byte.
+   */
+  private fun completeStreamingResponse(
+      request: HttpServletRequest,
+      response: CommitHookResponse,
+  ) {
+    if (!request.isAsyncStarted) {
+      response.fireBeforeCommit()
+      return
+    }
+    request.asyncContext.addListener(
+        object : jakarta.servlet.AsyncListener {
+          override fun onComplete(event: jakarta.servlet.AsyncEvent) = response.fireBeforeCommit()
+
+          override fun onTimeout(event: jakarta.servlet.AsyncEvent) = response.fireBeforeCommit()
+
+          override fun onError(event: jakarta.servlet.AsyncEvent) = response.fireBeforeCommit()
+
+          override fun onStartAsync(event: jakarta.servlet.AsyncEvent) = Unit
+        },
+    )
   }
 
   /** Python `_handle_preflight` (middleware.py:514-527). */
@@ -163,7 +239,7 @@ public class GuardFilter(
   /** The wrapped call_next (middleware.py:590 `wrap_call_next`): runs the downstream chain. */
   private fun callNext(
       request: GuardHttpServletRequest,
-      responseWrapper: ContentCachingResponseWrapper,
+      responseWrapper: HttpServletResponse,
       filterChain: FilterChain,
   ): GuardResponse {
     filterChain.doFilter(request, responseWrapper)
@@ -229,7 +305,7 @@ public class GuardFilter(
   /** Python `_inject_cors_headers` over the buffered downstream response. */
   private fun injectCorsHeadersIntoWrapper(
       requestHeaders: Map<String, String>,
-      wrapper: ContentCachingResponseWrapper,
+      wrapper: HttpServletResponse,
   ) {
     val corsHandler = middleware.corsHandler ?: return
     val corsHeaders = corsHandler.buildResponseHeaders(requestHeaders)
@@ -240,18 +316,26 @@ public class GuardFilter(
 
   /**
    * The `unwrap_response` analog (adapters.py:189): a facade-created response is written to the raw
-   * servlet response; a wrapper-backed response (security-bypass path) is already buffered in the
-   * wrapper and only needs its body flushed.
+   * servlet response; a wrapper-backed response (security-bypass path) was produced by the chain
+   * and only needs its buffered body copied, or its commit hook fired when it streamed.
    */
   private fun finish(
       response: GuardResponse,
-      responseWrapper: ContentCachingResponseWrapper,
       servletResponse: HttpServletResponse,
+      downstream: HttpServletResponse? = null,
   ) {
     if (response is ServletGuardResponse && response.wrapped != null) {
-      responseWrapper.copyBodyToResponse()
+      when (downstream) {
+        is ContentCachingResponseWrapper -> downstream.copyBodyToResponse()
+        is CommitHookResponse -> downstream.fireBeforeCommit()
+      }
       return
     }
     writeGuardResponse(response, servletResponse)
+  }
+
+  private companion object {
+    const val RETURN_PATTERN = "return_pattern"
+    const val STATUS_PATTERN = "status:"
   }
 }
