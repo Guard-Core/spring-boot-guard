@@ -1,5 +1,6 @@
 package com.guardcore.spring
 
+import com.guardcore.protocols.BoundedResponseBodyReader
 import com.guardcore.protocols.GuardResponse
 import com.guardcore.protocols.GuardResponseFactory
 import com.guardcore.protocols.MiddlewareResponseFactoryProtocol
@@ -12,39 +13,46 @@ import org.springframework.web.util.ContentCachingResponseWrapper
  * the facade's [GuardResponse] protocol, plus the plain factory the facade's response factory and
  * checks drive.
  *
- * The wrapper-backed flavor writes header mutations straight onto the buffered servlet response
- * (ContentCachingResponseWrapper keeps the real response uncommitted until copyBodyToResponse, so
- * the post-handler processResponse pass can still apply security headers and CORS, exactly the
- * envelope Starlette's BaseHTTPMiddleware gives fastapi-guard).
+ * The wrapper-backed flavor writes header mutations straight onto the downstream servlet response.
+ * Buffered (ContentCachingResponseWrapper) it stays uncommitted until copyBodyToResponse, so the
+ * post-handler processResponse pass can still apply security headers and CORS (the envelope
+ * Starlette's BaseHTTPMiddleware gives fastapi-guard). Streaming (CommitHookResponse) the same pass
+ * runs just before the response commits and [body] is null (the PureASGI envelope).
  */
 public class ServletGuardResponse
 private constructor(
     override val statusCode: Int,
     override var body: ByteArray?,
     override val headers: MutableMap<String, String>,
-    /** Non-null when this response wraps the buffered downstream servlet response. */
-    internal val wrapped: ContentCachingResponseWrapper?,
-) : GuardResponse {
+    /** Non-null when this response wraps the downstream servlet response. */
+    internal val wrapped: HttpServletResponse?,
+) : GuardResponse, BoundedResponseBodyReader {
   public constructor(
       statusCode: Int,
       body: ByteArray?,
       headers: Map<String, String> = linkedMapOf(),
   ) : this(statusCode, body, linkedMapOf<String, String>().apply { putAll(headers) }, null)
 
+  /** The bounded prefix the return-pattern rules inspect; empty when the body is not buffered. */
+  override suspend fun readBodyPrefix(maxBytes: Int): ByteArray {
+    val buffered = body ?: return ByteArray(0)
+    return buffered.copyOf(minOf(maxBytes, buffered.size))
+  }
+
   public companion object {
-    /** Wraps a buffered downstream response (the StarletteGuardResponse analog). */
-    public fun wrapping(wrapper: ContentCachingResponseWrapper): ServletGuardResponse =
+    /** Wraps the downstream response (the StarletteGuardResponse analog). */
+    public fun wrapping(wrapper: HttpServletResponse): ServletGuardResponse =
         ServletGuardResponse(
             wrapper.status,
-            wrapper.contentAsByteArray,
+            (wrapper as? ContentCachingResponseWrapper)?.contentAsByteArray,
             WrapperHeaders(wrapper),
             wrapper,
         )
   }
 }
 
-/** Mutable header view over the buffered servlet response (case-insensitive reads). */
-private class WrapperHeaders(private val wrapper: ContentCachingResponseWrapper) :
+/** Mutable header view over the downstream servlet response (case-insensitive reads). */
+private class WrapperHeaders(private val wrapper: HttpServletResponse) :
     MutableMap<String, String> {
   override val size: Int
     get() = wrapper.headerNames.size

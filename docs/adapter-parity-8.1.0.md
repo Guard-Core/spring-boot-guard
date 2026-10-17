@@ -60,7 +60,9 @@ are the bytes the handler sees, with bounded prefix reads stopping the wire
 pull at the cap. This is the exact contract of the reference's caching
 receive (and Starlette's own `_body` cache it mirrors).
 
-### 3. Unbuffered response streaming: DOES NOT HOLD (documented finding)
+### 3. Unbuffered response streaming: HOLDS since the Unreleased change (history below)
+
+Update: `GuardFilter` now streams by default. It wraps the response in `CommitHookResponse`, which runs the facade's `process_response` exit path and the CORS injection once, just before the first byte can leave (first write, flush, close, `sendError`, `sendRedirect`, or the completion of an async handler), the servlet analog of `http.response.start`. Only requests where a `custom_response_modifier` is configured or a route or global return-pattern rule inspects the body keep the buffering wrapper. The finding below is the original W10 assessment, kept for history.
 
 `GuardFilter` wraps the response in Spring's `ContentCachingResponseWrapper`
 and calls `copyBodyToResponse()` only after the facade's `process_response`
