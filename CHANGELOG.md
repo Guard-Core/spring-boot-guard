@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- `GuardFilter` no longer buffers every response. Responses stream unbuffered (SSE, `StreamingResponseBody`, `ResponseBodyEmitter`, `DeferredResult`, file downloads) and the security headers, CORS headers, metrics and status based behavior rules are applied just before the response commits, the way fastapi-guard's `PureASGISecurityMiddleware` does on `http.response.start`. The response is buffered only on requests where a `custom_response_modifier` is configured or a route or global return-pattern rule inspects the body. Guard-generated rejections are unchanged. The buffered response now implements `BoundedResponseBodyReader`, so body based return patterns (with `guard.behavior-scan-response-body=true`) evaluate; before, they never could.
+
+### Changed
+
+- Documented how to align Kotlin and coroutines under Spring Boot 3.5 dependency management, which otherwise downgrades both and fails the application at startup (README and docs/installation.md).
+
 ## [1.1.0] - 2026-10-16
 
 ### Added
