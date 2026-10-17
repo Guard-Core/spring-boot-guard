@@ -159,6 +159,10 @@ Initialization follows the fastapi-guard contract: lazy on the first request beh
 (the `guard.lifespan` analog); with `guard.lazy-init=false` and no eager init, the first request
 logs the same "eager init not honored" warning as fastapi-guard.
 
+### Enabling and disabling
+
+The guard is on by default as soon as the jar is on the classpath. Set `guard.enabled=false` to switch the whole auto-configuration off: no guard bean, filter or `guard.*` properties binding is created. An app that wants the guard opt-in sets `guard.enabled=false` as its default and turns it on per environment with `guard.enabled=true`.
+
 ## Engine dependency (includeBuild + dependency substitution)
 
 The engine artifact `com.guard-core:guard-core` (groupId is the Central Portal namespace; Kotlin

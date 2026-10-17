@@ -30,11 +30,18 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
  * Beans: SecurityConfig (guard.* properties + customizers), SpringGuardDecorator, GuardMiddleware
  * (the engine-facing middleware), GuardFilter (registered over every dispatcher type so error
  * dispatches stay guarded too, matching the ASGI middleware's envelope). `guard.eager-init=true`
- * additionally registers the GuardEagerInitializer boot hook.
+ * additionally registers the GuardEagerInitializer boot hook. `guard.enabled=false` switches the
+ * whole auto-configuration off (no bean, filter or properties binding); the default is on.
  */
 @AutoConfiguration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnClass(HttpServletRequest::class, DispatcherServlet::class)
+@ConditionalOnProperty(
+    prefix = "guard",
+    name = ["enabled"],
+    havingValue = "true",
+    matchIfMissing = true,
+)
 @EnableConfigurationProperties(GuardProperties::class)
 public open class GuardSecurityAutoConfiguration {
   @Bean

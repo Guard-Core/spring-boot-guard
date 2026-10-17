@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `guard.enabled` (default `true`) switches the whole auto-configuration off when set to `false`: no guard bean, filter or properties binding is created. Existing apps see no change.
+
+### Fixed
+
+- A `multipart/form-data` upload no longer loses its parts when `guard.detection-scan-body` is on (`Required part 'file' is not present`). The container parses the parts itself and never saw the guard's body replay, so the guard now scans a body rebuilt from the container-parsed parts (file names, part headers and at most `guard.detection-max-body-inspect-bytes` of each part payload, the surface the engine's multipart scan covers). Large file parts stay in the container's spool and are not held in memory. The container parses the upload before the detection check runs, within its own multipart size limits.
+- `application/x-www-form-urlencoded` bodies bound through `@RequestParam` or `request.getParameter` no longer come back empty when body scanning is on, for the same reason. The body parameters are now merged after the query parameters.
+
 ## [1.2.0] - 2026-10-17
 
 ### Fixed
