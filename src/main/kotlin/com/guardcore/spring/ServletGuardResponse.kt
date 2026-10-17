@@ -40,6 +40,10 @@ private constructor(
   }
 
   public companion object {
+    /** Kept for callers linked against 1.1.0 (the JVM signature took the caching wrapper). */
+    public fun wrapping(wrapper: ContentCachingResponseWrapper): ServletGuardResponse =
+        wrapping(wrapper as HttpServletResponse)
+
     /** Wraps the downstream response (the StarletteGuardResponse analog). */
     public fun wrapping(wrapper: HttpServletResponse): ServletGuardResponse =
         ServletGuardResponse(
