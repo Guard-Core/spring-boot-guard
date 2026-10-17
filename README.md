@@ -43,7 +43,7 @@ dependencies {
 }
 ```
 
-It brings in the engine facade `com.guard-core:guard-core:4.3.3`. To build from source, see "Engine dependency" below, or consume the composite from a sibling checkout.
+It brings in the engine facade `com.guard-core:guard-core:4.4.0`. To build from source, see "Engine dependency" below, or consume the composite from a sibling checkout.
 
 ## Kotlin and coroutines versions under Spring Boot dependency management
 
@@ -164,10 +164,10 @@ logs the same "eager init not honored" warning as fastapi-guard.
 The engine artifact `com.guard-core:guard-core` (groupId is the Central Portal namespace; Kotlin
 packages stay `com.guardcore.*`) is on Maven Central for consumers. This repository's own build pins the engine from source instead: CI and local builds check out `Guard-Core/guard-core-jvm` at the
 pinned ref `7711606` as the sibling directory `./guard-core-jvm`, and `settings.gradle.kts`
-substitutes the declared coordinates `com.guard-core:guard-core:4.3.3` /
-`com.guard-core:guard-core-engine:4.3.3` with the included build's projects (the Gradle analog of
+substitutes the declared coordinates `com.guard-core:guard-core:4.4.0` /
+`com.guard-core:guard-core-engine:4.4.0` with the included build's projects (the Gradle analog of
 the Rust path+version pattern). The declared dependency coordinates stay
-`com.guard-core:guard-core:4.3.3` (lockstep version per the family versioning law); consumers of a
+`com.guard-core:guard-core:4.4.0` (lockstep version per the family versioning law); consumers of a
 published artifact resolve the real Maven artifact with no composite involved.
 
 Set `GUARD_CORE_USE_COMPOSITE=false` to build without the composite: the declared coordinates then
