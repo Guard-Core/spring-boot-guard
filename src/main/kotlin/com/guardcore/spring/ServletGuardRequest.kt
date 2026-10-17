@@ -4,6 +4,7 @@ import com.guardcore.protocols.BoundedBodyReader
 import com.guardcore.protocols.GuardRequest
 import com.guardcore.protocols.RequestState
 import jakarta.servlet.ReadListener
+import jakarta.servlet.ServletException
 import jakarta.servlet.ServletInputStream
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletRequestWrapper
@@ -162,6 +163,11 @@ public class MapRequestState : RequestState {
  * The body-caching request wrapper. Reads the servlet input stream exactly once into a growable
  * cache; bounded prefix reads stop pulling from the wire after the prefix while the downstream
  * servlet stream replays the cached bytes before continuing with the live remainder.
+ *
+ * The container's own form parsing (`getParts` for multipart, `getParameter*` for urlencoded
+ * bodies) reads the container's input directly and never sees this replay, so the two form flavors
+ * are handled apart from the replay cache: multipart is scanned from the container-parsed parts,
+ * and urlencoded bodies are merged into the parameter accessors from the cache.
  */
 public class GuardHttpServletRequest(request: HttpServletRequest) :
     HttpServletRequestWrapper(request) {
@@ -169,9 +175,20 @@ public class GuardHttpServletRequest(request: HttpServletRequest) :
 
   private val cache = ByteCache()
   private var streamOpened: Boolean = false
+  private var multipartPrefix: ByteArray? = null
+  private var multipartPrefixLimit: Int = 0
+
+  private val isMultipart: Boolean
+    get() = contentType?.lowercase()?.startsWith(MULTIPART_FORM_DATA) == true
+
+  private val isUrlEncodedForm: Boolean
+    get() = contentType?.lowercase()?.startsWith(URLENCODED_FORM) == true
 
   @Synchronized
   public fun cachedBody(): ByteArray {
+    multipartScanBytes(Int.MAX_VALUE)?.let {
+      return it
+    }
     openStreamIfNecessary()
     cache.readUpstream()
     return cache.snapshot()
@@ -182,10 +199,116 @@ public class GuardHttpServletRequest(request: HttpServletRequest) :
     if (maxBytes <= 0) {
       return ByteArray(0)
     }
+    multipartScanBytes(maxBytes)?.let {
+      return it.copyOfRange(0, minOf(maxBytes, it.size))
+    }
     openStreamIfNecessary()
     cache.readUpstream(maxBytes)
     return cache.snapshot().copyOfRange(0, minOf(maxBytes, cache.size()))
   }
+
+  /**
+   * A multipart/form-data body rebuilt from the container-parsed parts (each part's headers, then
+   * its payload), reading payloads only until the rebuilt body reaches [maxBytes] in total. This is
+   * what the engine's multipart scan consumes (it scans file names, part headers and part payloads,
+   * the way the Python reference parses the capped raw body). The container spools large file parts
+   * to disk, so at most [maxBytes] of an upload is held in memory. Null when the request is not
+   * multipart or the container cannot parse parts (no multipart config); the raw replay path then
+   * applies.
+   */
+  private fun multipartScanBytes(maxBytes: Int): ByteArray? {
+    if (!isMultipart || streamOpened) {
+      return null
+    }
+    multipartPrefix?.let { built ->
+      if (multipartPrefixLimit >= maxBytes) {
+        return built
+      }
+    }
+    val boundary = multipartBoundary() ?: return null
+    val parts =
+        try {
+          super.getParts()
+        } catch (_: ServletException) {
+          return null
+        } catch (_: IllegalStateException) {
+          return null
+        } catch (_: java.io.IOException) {
+          return null
+        }
+    val out = java.io.ByteArrayOutputStream()
+    for (part in parts) {
+      if (out.size() >= maxBytes) {
+        break
+      }
+      out.write("--$boundary\r\n".toByteArray())
+      for (name in part.headerNames) {
+        for (value in part.getHeaders(name)) {
+          out.write("$name: $value\r\n".toByteArray())
+        }
+      }
+      out.write("\r\n".toByteArray())
+      part.inputStream.use { out.write(it.readNBytes(maxOf(0, maxBytes - out.size()))) }
+      out.write("\r\n".toByteArray())
+    }
+    out.write("--$boundary--\r\n".toByteArray())
+    return out.toByteArray().also {
+      multipartPrefix = it
+      multipartPrefixLimit = maxBytes
+    }
+  }
+
+  private fun multipartBoundary(): String? =
+      BOUNDARY_PARAM.find(contentType ?: "")?.groupValues?.get(1)
+
+  /** Body parameters of a urlencoded form, appended after the query parameters (Tomcat order). */
+  private fun mergedParameters(): Map<String, Array<String>>? {
+    if (!streamOpened || !isUrlEncodedForm) {
+      return null
+    }
+    // Drain the live remainder first so the container's own parameter parse sees a finished stream
+    // instead of parsing the unread tail as if it were the whole body.
+    cachedBody()
+    val merged = linkedMapOf<String, MutableList<String>>()
+    for ((name, values) in super.getParameterMap()) {
+      merged.getOrPut(name) { mutableListOf() }.addAll(values)
+    }
+    val charset = characterEncoding?.let { Charset.forName(it) } ?: Charsets.UTF_8
+    for (pair in String(cache.snapshot(), Charsets.ISO_8859_1).split("&")) {
+      if (pair.isEmpty()) {
+        continue
+      }
+      val separator = pair.indexOf('=')
+      val rawName = if (separator < 0) pair else pair.substring(0, separator)
+      val rawValue = if (separator < 0) "" else pair.substring(separator + 1)
+      merged
+          .getOrPut(decodeForm(rawName, charset)) { mutableListOf() }
+          .add(decodeForm(rawValue, charset))
+    }
+    return merged.mapValues { it.value.toTypedArray() }
+  }
+
+  private fun decodeForm(raw: String, charset: Charset): String =
+      URLDecoder.decode(String(raw.toByteArray(Charsets.ISO_8859_1), charset), charset)
+
+  private var formParameterCache: Map<String, Array<String>>? = null
+
+  @Synchronized
+  private fun formParameters(): Map<String, Array<String>>? =
+      formParameterCache ?: mergedParameters()?.also { formParameterCache = it }
+
+  override fun getParameterMap(): Map<String, Array<String>> =
+      formParameters() ?: super.getParameterMap()
+
+  override fun getParameter(name: String): String? =
+      formParameters()?.let { it[name]?.firstOrNull() } ?: super.getParameter(name)
+
+  override fun getParameterValues(name: String): Array<String>? =
+      formParameters()?.let { it[name] } ?: super.getParameterValues(name)
+
+  override fun getParameterNames(): java.util.Enumeration<String> =
+      formParameters()?.let { java.util.Collections.enumeration(it.keys) }
+          ?: super.getParameterNames()
 
   private fun openStreamIfNecessary() {
     if (!streamOpened) {
@@ -195,6 +318,9 @@ public class GuardHttpServletRequest(request: HttpServletRequest) :
   }
 
   override fun getInputStream(): ServletInputStream {
+    if (isMultipart && multipartPrefix != null) {
+      return super.getInputStream()
+    }
     openStreamIfNecessary()
     return cache.replayingServletInputStream()
   }
@@ -206,6 +332,12 @@ public class GuardHttpServletRequest(request: HttpServletRequest) :
               request.characterEncoding?.let { Charset.forName(it) } ?: Charsets.UTF_8,
           ),
       )
+
+  private companion object {
+    const val MULTIPART_FORM_DATA = "multipart/form-data"
+    const val URLENCODED_FORM = "application/x-www-form-urlencoded"
+    val BOUNDARY_PARAM = Regex("""boundary="?([^";\s]+)"?""", RegexOption.IGNORE_CASE)
+  }
 }
 
 /** Single-source byte cache serving both the facade reads and the downstream servlet stream. */

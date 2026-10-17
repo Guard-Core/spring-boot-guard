@@ -51,6 +51,10 @@ Maven with the BOM imported (declare these imports before `spring-boot-dependenc
 
 With `spring-boot-starter-parent` as the parent, set `<kotlin.version>2.4.21</kotlin.version>` and `<kotlin-coroutines.version>1.11.0</kotlin-coroutines.version>` as properties instead.
 
+## Enabling and disabling
+
+The guard is on by default as soon as the jar is on the classpath. Set `guard.enabled=false` to switch the whole auto-configuration off: no guard bean, filter or `guard.*` properties binding is created. An app that wants the guard opt-in sets `guard.enabled=false` as its default and turns it on per environment with `guard.enabled=true`.
+
 ## Engine dependency (includeBuild + dependency substitution)
 
 Consumers resolve the engine artifact `com.guard-core:guard-core` from Maven Central. This repository's own build pins the engine from source instead: CI and
