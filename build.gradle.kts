@@ -15,7 +15,7 @@ plugins {
 // standard practice for hyphenated domains.
 group = "com.guard-core"
 
-version = "1.1.0"
+version = "1.2.0"
 
 // Section 14.3 lockfile analog: every configuration resolves against the
 // committed gradle.lockfile. A dependency change without
@@ -34,7 +34,7 @@ kotlin {
 }
 
 dependencies {
-  // The engine facade: com.guard-core:guard-core:4.3.3, substituted with the
+  // The engine facade: com.guard-core:guard-core:4.4.0, substituted with the
   // pinned guard-core-jvm includeBuild checkout (settings.gradle.kts).
   api(libs.guard.core)
   implementation(platform(libs.netty.bom))

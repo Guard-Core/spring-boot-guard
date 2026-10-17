@@ -13,7 +13,7 @@ Published on Maven Central:
 
 ```kotlin
 dependencies {
-    implementation("com.guard-core:spring-boot-guard:1.1.0")
+    implementation("com.guard-core:spring-boot-guard:1.2.0")
 }
 ```
 
@@ -56,9 +56,9 @@ With `spring-boot-starter-parent` as the parent, set `<kotlin.version>2.4.21</ko
 Consumers resolve the engine artifact `com.guard-core:guard-core` from Maven Central. This repository's own build pins the engine from source instead: CI and
 local builds check out `Guard-Core/guard-core-jvm` at the pinned ref `7711606`
 as the sibling directory `./guard-core-jvm`, and `settings.gradle.kts`
-substitutes the declared coordinates `com.guard-core:guard-core:4.3.3` /
-`com.guard-core:guard-core-engine:4.3.3` with the included build's projects.
-The declared dependency coordinates stay `com.guard-core:guard-core:4.3.3`
+substitutes the declared coordinates `com.guard-core:guard-core:4.4.0` /
+`com.guard-core:guard-core-engine:4.4.0` with the included build's projects.
+The declared dependency coordinates stay `com.guard-core:guard-core:4.4.0`
 (lockstep version per the family versioning law).
 
 ```bash

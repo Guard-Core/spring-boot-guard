@@ -7,8 +7,8 @@ pipeline runs per request, error responses come byte-exact from the facade
 response factory, and the `guard.*` property surface reaches every
 `SecurityConfig` field.
 
-- **Status**: 1.0.0, released (the first synchronized release)
-- **Engine**: `com.guard-core:guard-core:4.3.3` (built from source through a
+- **Status**: 1.2.0, released
+- **Engine**: `com.guard-core:guard-core:4.4.0` (built from source through a
   composite build, see [Installation](installation.md))
 - **Parity**: the engine's
   [every-feature matrix](https://github.com/Guard-Core/guard-core-jvm/blob/master/docs/every-feature-matrix.md)
