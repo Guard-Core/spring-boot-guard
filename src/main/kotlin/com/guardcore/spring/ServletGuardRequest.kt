@@ -208,12 +208,13 @@ public class GuardHttpServletRequest(request: HttpServletRequest) :
   }
 
   /**
-   * A multipart/form-data body rebuilt from the container-parsed parts (headers, then at most
-   * [maxBytes] of each part's payload), which is what the engine's multipart scan consumes (it
-   * scans file names, part headers and part payloads, the way the Python reference parses the raw
-   * body). The container spools large file parts to disk, so no upload is held in memory. Null when
-   * the request is not multipart or the container cannot parse parts (no multipart config); the raw
-   * replay path then applies.
+   * A multipart/form-data body rebuilt from the container-parsed parts (each part's headers, then
+   * its payload), reading payloads only until the rebuilt body reaches [maxBytes] in total. This is
+   * what the engine's multipart scan consumes (it scans file names, part headers and part payloads,
+   * the way the Python reference parses the capped raw body). The container spools large file parts
+   * to disk, so at most [maxBytes] of an upload is held in memory. Null when the request is not
+   * multipart or the container cannot parse parts (no multipart config); the raw replay path then
+   * applies.
    */
   private fun multipartScanBytes(maxBytes: Int): ByteArray? {
     if (!isMultipart || streamOpened) {
