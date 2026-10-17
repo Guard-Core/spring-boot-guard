@@ -368,6 +368,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#enabling-and-disabling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling and disabling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#engine-dependency-includebuild-dependency-substitution" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -538,6 +549,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#enabling-and-disabling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling and disabling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#engine-dependency-includebuild-dependency-substitution" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -617,6 +639,8 @@ packages stay <code>com.guardcore.*</code>.</p>
 <span class="nt">&lt;/dependencyManagement&gt;</span>
 </code></pre></div>
 <p>With <code>spring-boot-starter-parent</code> as the parent, set <code>&lt;kotlin.version&gt;2.4.21&lt;/kotlin.version&gt;</code> and <code>&lt;kotlin-coroutines.version&gt;1.11.0&lt;/kotlin-coroutines.version&gt;</code> as properties instead.</p>
+<h2 id="enabling-and-disabling">Enabling and disabling</h2>
+<p>The guard is on by default as soon as the jar is on the classpath. Set <code>guard.enabled=false</code> to switch the whole auto-configuration off: no guard bean, filter or <code>guard.*</code> properties binding is created. An app that wants the guard opt-in sets <code>guard.enabled=false</code> as its default and turns it on per environment with <code>guard.enabled=true</code>.</p>
 <h2 id="engine-dependency-includebuild-dependency-substitution">Engine dependency (includeBuild + dependency substitution)</h2>
 <p>Consumers resolve the engine artifact <code>com.guard-core:guard-core</code> from Maven Central. This repository's own build pins the engine from source instead: CI and
 local builds check out <code>Guard-Core/guard-core-jvm</code> at the pinned ref <code>7711606</code>
