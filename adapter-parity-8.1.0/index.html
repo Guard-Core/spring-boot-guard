@@ -470,10 +470,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-unbuffered-response-streaming-does-not-hold-documented-finding" class="md-nav__link">
+  <a href="#3-unbuffered-response-streaming-holds-since-the-unreleased-change-history-below" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Unbuffered response streaming: DOES NOT HOLD (documented finding)
+        3. Unbuffered response streaming: HOLDS since the Unreleased change (history below)
       
     </span>
   </a>
@@ -587,10 +587,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-unbuffered-response-streaming-does-not-hold-documented-finding" class="md-nav__link">
+  <a href="#3-unbuffered-response-streaming-holds-since-the-unreleased-change-history-below" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Unbuffered response streaming: DOES NOT HOLD (documented finding)
+        3. Unbuffered response streaming: HOLDS since the Unreleased change (history below)
       
     </span>
   </a>
@@ -684,7 +684,8 @@ chain a replaying <code>ServletInputStream</code>: the bytes the penetration sca
 are the bytes the handler sees, with bounded prefix reads stopping the wire
 pull at the cap. This is the exact contract of the reference's caching
 receive (and Starlette's own <code>_body</code> cache it mirrors).</p>
-<h3 id="3-unbuffered-response-streaming-does-not-hold-documented-finding">3. Unbuffered response streaming: DOES NOT HOLD (documented finding)</h3>
+<h3 id="3-unbuffered-response-streaming-holds-since-the-unreleased-change-history-below">3. Unbuffered response streaming: HOLDS since the Unreleased change (history below)</h3>
+<p>Update: <code>GuardFilter</code> now streams by default. It wraps the response in <code>CommitHookResponse</code>, which runs the facade's <code>process_response</code> exit path and the CORS injection once, just before the first byte can leave (first write, flush, close, <code>sendError</code>, <code>sendRedirect</code>, or the completion of an async handler), the servlet analog of <code>http.response.start</code>. Only requests where a <code>custom_response_modifier</code> is configured or a route or global return-pattern rule inspects the body keep the buffering wrapper. The finding below is the original W10 assessment, kept for history.</p>
 <p><code>GuardFilter</code> wraps the response in Spring's <code>ContentCachingResponseWrapper</code>
 and calls <code>copyBodyToResponse()</code> only after the facade's <code>process_response</code>
 exit path and CORS injection run. Every response body is fully materialized

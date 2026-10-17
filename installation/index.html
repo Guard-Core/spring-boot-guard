@@ -357,6 +357,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#kotlin-and-coroutines-versions-under-spring-boot-dependency-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kotlin and coroutines versions under Spring Boot dependency management
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#engine-dependency-includebuild-dependency-substitution" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -516,6 +527,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#kotlin-and-coroutines-versions-under-spring-boot-dependency-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kotlin and coroutines versions under Spring Boot dependency management
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#engine-dependency-includebuild-dependency-substitution" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -573,6 +595,28 @@
 </code></pre></div>
 <p>The group ID is <code>com.guard-core</code> (the Central Portal namespace); Kotlin
 packages stay <code>com.guardcore.*</code>.</p>
+<h2 id="kotlin-and-coroutines-versions-under-spring-boot-dependency-management">Kotlin and coroutines versions under Spring Boot dependency management</h2>
+<p>Spring Boot 3.5 manages <code>kotlin.version</code> 1.9.25, <code>kotlin-coroutines.version</code> 1.8.1 and <code>kotlin-serialization.version</code> 1.6.3, and dependency management overrides the versions this library was built with (Kotlin 2.4.21, coroutines 1.11.0). A Java application that imports the <code>spring-boot-dependencies</code> BOM, or uses the Spring Boot Gradle plugin with <code>io.spring.dependency-management</code>, therefore fails at startup with <code>NoSuchMethodError: kotlinx.coroutines.BuildersKt.runBlockingK$default</code> (coroutines 1.11.0 added <code>runBlockingK</code>), and with coroutines 1.11.0 on a Kotlin 1.9 stdlib every request fails with <code>ClassNotFoundException: kotlin.coroutines.jvm.internal.SpillingKt</code>. Align both versions. Serialization can stay on the managed 1.6.3.</p>
+<p>Gradle with the Spring Boot plugin and <code>io.spring.dependency-management</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">ext</span><span class="o">[</span><span class="s1">'kotlin.version'</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'2.4.21'</span>
+<span class="n">ext</span><span class="o">[</span><span class="s1">'kotlin-coroutines.version'</span><span class="o">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'1.11.0'</span>
+</code></pre></div>
+<p>Maven with the BOM imported (declare these imports before <code>spring-boot-dependencies</code>, the first declaration wins):</p>
+<div class="highlight"><pre><span></span><code><span class="nt">&lt;dependencyManagement&gt;</span>
+<span class="w">  </span><span class="nt">&lt;dependencies&gt;</span>
+<span class="w">    </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">      </span><span class="nt">&lt;groupId&gt;</span>org.jetbrains.kotlin<span class="nt">&lt;/groupId&gt;&lt;artifactId&gt;</span>kotlin-bom<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">      </span><span class="nt">&lt;version&gt;</span>2.4.21<span class="nt">&lt;/version&gt;&lt;type&gt;</span>pom<span class="nt">&lt;/type&gt;&lt;scope&gt;</span>import<span class="nt">&lt;/scope&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/dependency&gt;</span>
+<span class="w">    </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">      </span><span class="nt">&lt;groupId&gt;</span>org.jetbrains.kotlinx<span class="nt">&lt;/groupId&gt;&lt;artifactId&gt;</span>kotlinx-coroutines-bom<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">      </span><span class="nt">&lt;version&gt;</span>1.11.0<span class="nt">&lt;/version&gt;&lt;type&gt;</span>pom<span class="nt">&lt;/type&gt;&lt;scope&gt;</span>import<span class="nt">&lt;/scope&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/dependency&gt;</span>
+<span class="w">    </span><span class="cm">&lt;!-- then the spring-boot-dependencies import --&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/dependencies&gt;</span>
+<span class="nt">&lt;/dependencyManagement&gt;</span>
+</code></pre></div>
+<p>With <code>spring-boot-starter-parent</code> as the parent, set <code>&lt;kotlin.version&gt;2.4.21&lt;/kotlin.version&gt;</code> and <code>&lt;kotlin-coroutines.version&gt;1.11.0&lt;/kotlin-coroutines.version&gt;</code> as properties instead.</p>
 <h2 id="engine-dependency-includebuild-dependency-substitution">Engine dependency (includeBuild + dependency substitution)</h2>
 <p>Consumers resolve the engine artifact <code>com.guard-core:guard-core</code> from Maven Central. This repository's own build pins the engine from source instead: CI and
 local builds check out <code>Guard-Core/guard-core-jvm</code> at the pinned ref <code>7711606</code>
