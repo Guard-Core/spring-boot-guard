@@ -13,7 +13,7 @@ Published on Maven Central:
 
 ```kotlin
 dependencies {
-    implementation("com.guard-core:spring-boot-guard:1.1.0")
+    implementation("com.guard-core:spring-boot-guard:1.2.0")
 }
 ```
 
