@@ -10,7 +10,7 @@
 # com.guard-core:guard-core (compile) and kotlin-reflect (compile) - proven in
 # the engine repo's docs/release-rehearsal.md POM audit. Everything below is
 # a test-scope package that consumers resolve at their own Boot-managed
-# versions (spring-webmvc, tomcat, jackson, log4j-api).
+# versions (spring-webmvc, jackson, log4j-api).
 
 # --- spring-webmvc 6.2.19: compileOnly + test-scope here (testImplementation
 # spring-boot-starter-web); NOT shipped by the adapter POM. Consumers resolve
@@ -24,21 +24,6 @@ reason = "spring-webmvc 6.2.19 is compileOnly/test-scope in this repo and not sh
 [[IgnoredVulns]]
 id = "GHSA-pc63-qcmh-9cmg"
 reason = "spring-webmvc 6.2.19 is compileOnly/test-scope in this repo and not shipped by the adapter POM; consumers resolve their own Boot-managed version; fix train is the Boot 4 line per OSV"
-
-# --- tomcat-embed-core 10.1.55: test-scope only (spring-boot-starter-test);
-# not shipped by the adapter POM; consumers resolve their own container.
-
-[[IgnoredVulns]]
-id = "GHSA-9xv2-5v5q-p794"
-reason = "tomcat-embed-core 10.1.55 is test-scope (spring-boot-starter-test) and not shipped by the adapter POM; consumers resolve their own container version"
-
-[[IgnoredVulns]]
-id = "GHSA-gcx9-497g-6cp6"
-reason = "tomcat-embed-core 10.1.55 is test-scope (spring-boot-starter-test) and not shipped by the adapter POM; consumers resolve their own container version"
-
-[[IgnoredVulns]]
-id = "GHSA-h3x4-894j-xpx5"
-reason = "tomcat-embed-core 10.1.55 is test-scope (spring-boot-starter-test) and not shipped by the adapter POM; consumers resolve their own container version"
 
 # --- jackson 2.21.4 (databind + core): test-scope only
 # (spring-boot-starter-test); not shipped by the adapter POM; consumers
