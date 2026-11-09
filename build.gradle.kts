@@ -66,9 +66,9 @@ dependencies {
   // 10.1.61 fixes GHSA-f525-44xv-f2qj, GHSA-9xv2-5v5q-p794, GHSA-gcx9-497g-6cp6 and
   // GHSA-h3x4-894j-xpx5.
   constraints {
-    testImplementation("org.apache.tomcat.embed:tomcat-embed-core:10.1.61")
-    testImplementation("org.apache.tomcat.embed:tomcat-embed-el:10.1.61")
-    testImplementation("org.apache.tomcat.embed:tomcat-embed-websocket:10.1.61")
+    testImplementation("org.apache.tomcat.embed:tomcat-embed-core:11.0.27")
+    testImplementation("org.apache.tomcat.embed:tomcat-embed-el:11.0.27")
+    testImplementation("org.apache.tomcat.embed:tomcat-embed-websocket:11.0.27")
   }
 }
 
