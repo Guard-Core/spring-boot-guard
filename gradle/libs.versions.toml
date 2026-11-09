@@ -2,12 +2,12 @@
 kotlin = "2.4.21"
 coroutines = "1.11.0"
 springBoot = "3.5.16"
-spotless = "8.10.4"
+spotless = "8.11.0"
 detekt = "1.23.8"
 # Engine facade coordinates (groupId com.guard-core, the Central Portal namespace): substituted with the pinned includeBuild checkout
 # (see settings.gradle.kts) until the artifact publishes to Maven Central.
 guardCore = "4.4.0"
-netty = "4.2.19.Final"
+netty = "4.2.20.Final"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
