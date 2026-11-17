@@ -26,3 +26,5 @@ updates:
     ignore:
       - dependency-name: "org.springframework.boot:spring-boot-dependencies"
         update-types: ["version-update:semver-major"]
+      - dependency-name: "org.apache.tomcat.embed:*"
+        update-types: ["version-update:semver-major"]
