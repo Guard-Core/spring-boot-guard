@@ -62,13 +62,14 @@ dependencies {
   // Gradle 9 requires the platform launcher on the test runtime (boot docs convention).
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-  // The Boot 3.5.16 BOM manages Tomcat 10.1.55 (test scope only, not in the adapter POM);
-  // 10.1.61 fixes GHSA-f525-44xv-f2qj, GHSA-9xv2-5v5q-p794, GHSA-gcx9-497g-6cp6 and
-  // GHSA-h3x4-894j-xpx5.
+  // The Boot 3.5.16 BOM manages Tomcat 10.1.55 (test scope only, not in the adapter POM).
+  // Boot 3.5 supports the Tomcat 10.1 line, so the pin stays on it; 10.1.62 is the newest
+  // 10.1 release with no OSV advisory. GHSA-f525-44xv-f2qj, GHSA-9xv2-5v5q-p794,
+  // GHSA-gcx9-497g-6cp6 and GHSA-h3x4-894j-xpx5 were fixed by 10.1.61.
   constraints {
-    testImplementation("org.apache.tomcat.embed:tomcat-embed-core:10.1.61")
-    testImplementation("org.apache.tomcat.embed:tomcat-embed-el:10.1.61")
-    testImplementation("org.apache.tomcat.embed:tomcat-embed-websocket:10.1.61")
+    testImplementation("org.apache.tomcat.embed:tomcat-embed-core:10.1.62")
+    testImplementation("org.apache.tomcat.embed:tomcat-embed-el:10.1.62")
+    testImplementation("org.apache.tomcat.embed:tomcat-embed-websocket:10.1.62")
   }
 }
 
